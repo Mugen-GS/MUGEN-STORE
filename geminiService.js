@@ -2,8 +2,8 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Initialize Gemini model
-const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+// Initialize Gemini model (use gemini-1.5-flash for free tier)
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 // System instruction for the AI assistant
 const SYSTEM_INSTRUCTION = `You are a helpful sales assistant for a business on WhatsApp. Your goals are:
