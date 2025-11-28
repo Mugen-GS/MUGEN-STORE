@@ -1,8 +1,12 @@
 // Google Apps Script Code - Deploy this as Web App
 // This will act as your API endpoint for the Google Sheet
 
-const SHEET_ID = 'YOUR_SHEET_ID_HERE'; // Your Google Sheet ID
-const ss = SpreadsheetApp.openById(SHEET_ID);
+const SHEET_ID = '1FRpTj9c1a6L7z-xNzB3ClpnhPiYQuCZ1A1pmhItP_Jo';
+
+// Helper function to get spreadsheet (called within each function)
+function getSpreadsheet() {
+  return SpreadsheetApp.openById(SHEET_ID);
+}
 
 // Handle GET requests (read data)
 function doGet(e) {
@@ -52,6 +56,7 @@ function doPost(e) {
 
 // Get all rows from a sheet
 function getRows(sheetName) {
+  const ss = getSpreadsheet();
   const sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
     return ContentService.createTextOutput(
@@ -68,6 +73,7 @@ function getRows(sheetName) {
 
 // Append a row to a sheet
 function appendRow(sheetName, values) {
+  const ss = getSpreadsheet();
   const sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
     return ContentService.createTextOutput(
@@ -84,6 +90,7 @@ function appendRow(sheetName, values) {
 
 // Update a specific row
 function updateRow(sheetName, rowIndex, values) {
+  const ss = getSpreadsheet();
   const sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
     return ContentService.createTextOutput(
@@ -101,6 +108,8 @@ function updateRow(sheetName, rowIndex, values) {
 
 // Initialize sheet headers
 function initializeHeaders() {
+  const ss = getSpreadsheet();
+  
   // Users sheet
   let sheet = ss.getSheetByName('Users');
   if (!sheet) {
