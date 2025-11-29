@@ -32,9 +32,9 @@ Buying signals include: asking about prices, availability, stock, payment method
     // Add current message
     prompt += `User: ${userMessage}\nAssistant:`;
 
-    // Call Gemini API using REST
+    // Call Gemini API using REST (gemini-2.5-flash is fastest free model)
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         contents: [{
           parts: [{
