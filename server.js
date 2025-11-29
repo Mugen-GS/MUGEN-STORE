@@ -129,6 +129,29 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Test Gemini models endpoint
+app.get('/test-models', async (req, res) => {
+  try {
+    const axios = require('axios');
+    const response = await axios.get(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`
+    );
+    
+    const models = response.data.models
+      .filter(m => m.supportedGenerationMethods.includes('generateContent'))
+      .map(m => m.name);
+    
+    res.json({ 
+      availableModels: models,
+      recommendation: models[0]
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: error.response?.data || error.message 
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, async () => {
   console.log('🚀 WhatsApp Gemini AI Bot Started!');
