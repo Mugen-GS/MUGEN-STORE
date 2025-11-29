@@ -1,33 +1,19 @@
 const axios = require('axios');
+const { buildEnhancedPrompt } = require('./aiTraining');
 
 /**
  * Get AI response from Gemini using REST API
  * @param {string} userMessage - The user's message
- * @param {Array} conversationHistory - Previous messages for context
+ * @param {Array} conversationHistory - Previous messages for context (deprecated, now using sheets)
+ * @param {string} phoneNumber - Customer's phone number for context
  * @returns {Promise<string>} AI response
  */
-async function getGeminiResponse(userMessage, conversationHistory = []) {
+async function getGeminiResponse(userMessage, conversationHistory = [], phoneNumber = null) {
   try {
-    // Build conversation context
-    const systemInstruction = `You are a helpful sales assistant for a business on WhatsApp. Your goals are:
-1. Have natural, friendly conversations with customers
-2. Identify if customers are genuinely interested in buying (leads)
-3. Ask relevant questions to understand their needs
-4. Be concise - keep responses under 3 sentences when possible
-5. If someone shows buying intent, politely ask for their name, what they're interested in, and when they need it
-
-Buying signals include: asking about prices, availability, stock, payment methods, delivery, or wanting to place an order.`;
+    // Build enhanced prompt with personality + customer context from sheets
+    const systemInstruction = await buildEnhancedPrompt(phoneNumber);
     
     let prompt = systemInstruction + '\n\n';
-    
-    // Add conversation history
-    if (conversationHistory.length > 0) {
-      prompt += 'Previous conversation:\n';
-      conversationHistory.forEach(msg => {
-        prompt += `User: ${msg.userMessage}\nAssistant: ${msg.aiResponse}\n`;
-      });
-      prompt += '\n';
-    }
     
     // Add current message
     prompt += `User: ${userMessage}\nAssistant:`;

@@ -9,9 +9,11 @@ const {
   saveLead 
 } = require('./dataManager');
 const { initializeSheets } = require('./sheetsService');
+const { getTrainingData, getAIMemory, addMemory } = require('./aiTraining');
 
 const app = express();
 app.use(express.json());
+app.use(express.static('public')); // Serve admin UI
 
 const PORT = process.env.PORT || 3000;
 
@@ -33,6 +35,11 @@ app.get('/webhook', (req, res) => {
 app.post('/webhook', async (req, res) => {
   try {
     const body = req.body;
+    
+    // Log full webhook data for debugging
+    console.log('\n=== WEBHOOK RECEIVED ===');
+    console.log(JSON.stringify(body, null, 2));
+    console.log('========================\n');
 
     // Check if it's a WhatsApp message
     if (body.object === 'whatsapp_business_account') {
@@ -66,11 +73,8 @@ app.post('/webhook', async (req, res) => {
               // Save/update user
               const user = await createOrUpdateUser(from, contactName);
 
-              // Get conversation history for context
-              const conversationHistory = await getUserConversationHistory(from, 5);
-
-              // Get AI response from Gemini
-              const aiResponse = await getGeminiResponse(userMessage, conversationHistory);
+              // Get AI response from Gemini with customer context
+              const aiResponse = await getGeminiResponse(userMessage, [], from);
 
               // Save conversation
               await saveConversation(from, userMessage, aiResponse);
@@ -127,6 +131,49 @@ app.get('/health', (req, res) => {
     message: 'WhatsApp Gemini Bot is running!',
     timestamp: new Date().toISOString()
   });
+});
+
+// Admin UI
+app.get('/admin', (req, res) => {
+  res.sendFile(__dirname + '/public/admin.html');
+});
+
+// Admin API: Add memory
+app.post('/admin/add-memory', async (req, res) => {
+  try {
+    const { category, key, value, notes } = req.body;
+    const result = await addMemory(category, key, value, notes);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin API: Get memory
+app.get('/admin/memory', async (req, res) => {
+  try {
+    const memory = await getAIMemory();
+    res.json(memory);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin API: Get stats
+app.get('/admin/stats', async (req, res) => {
+  try {
+    const training = await getTrainingData();
+    const memory = await getAIMemory();
+    
+    const memoryCount = Object.values(memory).reduce((sum, cat) => sum + Object.keys(cat).length, 0);
+    
+    res.json({
+      trainingExamples: training.length,
+      memoryItems: memoryCount
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Test Gemini models endpoint
