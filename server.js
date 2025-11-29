@@ -72,8 +72,8 @@ app.post('/webhook', async (req, res) => {
               // Get AI response from Gemini
               const aiResponse = await getGeminiResponse(userMessage, conversationHistory);
 
-              // Save conversation (both user message and AI response)
-              await saveConversation(from, contactName, userMessage, aiResponse);
+              // Save conversation
+              await saveConversation(from, userMessage, aiResponse);
 
               // Detect buying intent
               const hasBuyingIntent = detectBuyingIntent(userMessage);
