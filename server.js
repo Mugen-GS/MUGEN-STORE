@@ -138,6 +138,16 @@ app.get('/admin', (req, res) => {
   res.sendFile(__dirname + '/public/admin.html');
 });
 
+// Teach UI - Chat interface to teach the AI
+app.get('/teach', (req, res) => {
+  res.sendFile(__dirname + '/public/teach.html');
+});
+
+// Test UI - Test the AI with TrainingChats personality
+app.get('/test', (req, res) => {
+  res.sendFile(__dirname + '/public/test.html');
+});
+
 // Admin API: Add memory
 app.post('/admin/add-memory', async (req, res) => {
   try {
@@ -196,6 +206,103 @@ app.get('/test-models', async (req, res) => {
     res.status(500).json({ 
       error: error.response?.data || error.message 
     });
+  }
+});
+
+// API: Teach the AI (intelligent conversation that extracts and saves knowledge)
+app.post('/api/teach', async (req, res) => {
+  try {
+    const { message } = req.body;
+    
+    // Get AI response with instruction to extract info
+    const teachPrompt = `You are MUGEN's business assistant. A human is teaching you about the business.
+
+User said: "${message}"
+
+Your tasks:
+1. Acknowledge what they taught you
+2. Extract key information (products, prices, policies, etc.)
+3. Ask a follow-up question to learn more
+
+Respond naturally and conversationally.`;
+
+    const axios = require('axios');
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        contents: [{
+          parts: [{ text: teachPrompt }]
+        }]
+      },
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+
+    const aiResponse = response.data.candidates[0].content.parts[0].text.trim();
+    
+    // Simple keyword extraction for auto-saving
+    const saved = [];
+    const lowerMessage = message.toLowerCase();
+    
+    // Extract product info
+    if (lowerMessage.includes('product') || lowerMessage.includes('sell') || lowerMessage.includes('offer')) {
+      const match = message.match(/([A-Z][\w\s]+?)(?=\s(?:for|costs?|prices?|is|are)|$)/i);
+      if (match) {
+        await addMemory('products', match[1].trim(), message, '');
+        saved.push('Product info');
+      }
+    }
+    
+    // Extract pricing
+    if (lowerMessage.match(/\$\d+|\d+\s?(?:dollars?|usd|price)/)) {
+      await addMemory('pricing', `Price info - ${new Date().toLocaleDateString()}`, message, '');
+      saved.push('Pricing');
+    }
+    
+    // Extract policy
+    if (lowerMessage.includes('policy') || lowerMessage.includes('return') || lowerMessage.includes('warranty')) {
+      await addMemory('policies', `Policy - ${new Date().toLocaleDateString()}`, message, '');
+      saved.push('Policy');
+    }
+    
+    res.json({ response: aiResponse, saved });
+  } catch (error) {
+    console.error('Error in teach API:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API: Test chat with AI (simulates WhatsApp conversation)
+app.post('/api/test/chat', async (req, res) => {
+  try {
+    const { message, phone } = req.body;
+    
+    // Save/update user
+    await createOrUpdateUser(phone, 'Test User');
+    
+    // Get AI response with full context (same as WhatsApp)
+    const aiResponse = await getGeminiResponse(message, [], phone);
+    
+    // Save conversation
+    await saveConversation(phone, message, aiResponse);
+    
+    res.json({ response: aiResponse });
+  } catch (error) {
+    console.error('Error in test chat:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API: Get conversation history for test UI
+app.get('/api/test/history', async (req, res) => {
+  try {
+    const phone = req.query.phone;
+    const history = await getUserConversationHistory(phone, 20);
+    res.json({ history });
+  } catch (error) {
+    console.error('Error loading history:', error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 

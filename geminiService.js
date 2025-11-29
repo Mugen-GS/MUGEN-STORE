@@ -13,6 +13,17 @@ async function getGeminiResponse(userMessage, conversationHistory = [], phoneNum
     // Build enhanced prompt with personality + customer context from sheets
     const systemInstruction = await buildEnhancedPrompt(phoneNumber);
     
+    // DEBUG: Log what we're sending to AI
+    console.log('\n=== AI CONTEXT DEBUG ===');
+    console.log('Phone:', phoneNumber);
+    console.log('Prompt length:', systemInstruction.length, 'characters');
+    if (phoneNumber && systemInstruction.includes('PREVIOUS MESSAGES')) {
+      console.log('✅ Customer history loaded');
+    } else if (phoneNumber) {
+      console.log('⚠️ No previous conversation history');
+    }
+    console.log('========================\n');
+    
     let prompt = systemInstruction + '\n\n';
     
     // Add current message

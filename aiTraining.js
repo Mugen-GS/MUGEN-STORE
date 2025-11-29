@@ -159,11 +159,11 @@ async function buildEnhancedPrompt(phoneNumber = null) {
   const trainingData = await getTrainingData();
   const memory = await getAIMemory();
   
-  let prompt = `You are an AI assistant that mimics MUGEN's communication style for a WhatsApp business account.\n\n`;
+  let prompt = `You are MUGEN's AI assistant for a WhatsApp business account. You must communicate EXACTLY like MUGEN.\n\n`;
   
   // Add personality training from "TrainingChats" sheet
   if (trainingData.length > 0) {
-    prompt += `COMMUNICATION STYLE (learn from these examples of how MUGEN talks):\n`;
+    prompt += `COMMUNICATION STYLE - Study how MUGEN talks:\n`;
     trainingData.slice(0, 3).forEach((convo, i) => {
       prompt += `Example ${i + 1}:\n`;
       convo.forEach(msg => {
@@ -176,7 +176,7 @@ async function buildEnhancedPrompt(phoneNumber = null) {
   
   // Add business context
   if (Object.keys(memory).length > 0) {
-    prompt += `\nBUSINESS KNOWLEDGE:\n`;
+    prompt += `\nBUSINESS KNOWLEDGE (use this to answer questions):\n`;
     
     for (const [category, items] of Object.entries(memory)) {
       prompt += `\n${category.toUpperCase()}:\n`;
@@ -190,22 +190,24 @@ async function buildEnhancedPrompt(phoneNumber = null) {
   if (phoneNumber) {
     const customerHistory = await getCustomerHistory(phoneNumber);
     if (customerHistory.length > 0) {
-      prompt += `\nPREVIOUS CONVERSATION WITH THIS CUSTOMER:\n`;
+      prompt += `\n=== PREVIOUS MESSAGES WITH THIS CUSTOMER ===\n`;
       customerHistory.forEach(msg => {
         prompt += `Customer: ${msg.userMessage}\n`;
-        prompt += `You (MUGEN): ${msg.aiResponse}\n`;
+        prompt += `You replied: ${msg.aiResponse}\n\n`;
       });
-      prompt += `\n`;
+      prompt += `=== END OF PREVIOUS MESSAGES ===\n\n`;
+    } else {
+      prompt += `\n(This is the first message from this customer - no previous conversation history)\n\n`;
     }
   }
   
-  prompt += `\nINSTRUCTIONS:
-1. Respond in MUGEN's style (casual, helpful, knowledgeable about tech/products)
-2. Use the business knowledge above to answer questions accurately
-3. Remember the previous conversation with this customer and maintain context
-4. Keep responses concise (2-3 sentences max unless explaining something complex)
-5. If someone shows buying intent, ask for their needs and budget
-6. Be friendly but professional\n\n`;
+  prompt += `\nCRITICAL RULES:
+1. NEVER claim to remember things unless they are in the "PREVIOUS MESSAGES" section above
+2. If there's no previous conversation, SAY "This is our first chat" or "I don't have previous messages from you"
+3. If asked about previous messages, ONLY reference what's in the PREVIOUS MESSAGES section
+4. Respond EXACTLY like MUGEN - casual, direct, no corporate AI talk
+5. Keep it short (1-3 sentences) unless explaining something technical
+6. NO PLACEHOLDERS like [mention the topic] - only use real info from memory\n\n`;
   
   return prompt;
 }
