@@ -74,14 +74,35 @@ function getRows(sheetName) {
 // Append a row to a sheet
 function appendRow(sheetName, values) {
   const ss = getSpreadsheet();
-  const sheet = ss.getSheetByName(sheetName);
+  const sheet = ss.getSheetByName('Mugen Store Chats');
   if (!sheet) {
     return ContentService.createTextOutput(
       JSON.stringify({ error: 'Sheet not found' })
     ).setMimeType(ContentService.MimeType.JSON);
   }
   
+  // Add separator line before new contact if this is a user message from different contact
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1 && values[3] === 'User') { // Check if it's a user message
+    const lastPhone = sheet.getRange(lastRow, 3).getValue();
+    if (lastPhone !== values[2]) { // Different contact
+      // Add empty row for visual separation
+      sheet.appendRow(['', '', '', '', '', '', '']);
+      sheet.getRange(sheet.getLastRow(), 1, 1, 7).setBackground('#f0f0f0');
+    }
+  }
+  
   sheet.appendRow(values);
+  
+  // Format the row
+  const newRow = sheet.getLastRow();
+  if (values[3] === 'User') {
+    sheet.getRange(newRow, 1, 1, 7).setBackground('#e8f0fe'); // Light blue for user
+  } else if (values[3] === 'AI') {
+    sheet.getRange(newRow, 1, 1, 7).setBackground('#e6f4ea'); // Light green for AI
+  } else if (values[3] === 'Lead Alert') {
+    sheet.getRange(newRow, 1, 1, 7).setBackground('#fce8e6').setFontWeight('bold'); // Light red for leads
+  }
   
   return ContentService.createTextOutput(
     JSON.stringify({ success: true, message: 'Row added' })
@@ -110,31 +131,16 @@ function updateRow(sheetName, rowIndex, values) {
 function initializeHeaders() {
   const ss = getSpreadsheet();
   
-  // Users sheet
-  let sheet = ss.getSheetByName('Users');
+  // Main chat sheet
+  let sheet = ss.getSheetByName('Mugen Store Chats');
   if (!sheet) {
-    sheet = ss.insertSheet('Users');
+    sheet = ss.insertSheet('Mugen Store Chats');
   }
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Phone Number', 'Name', 'First Contact', 'Last Contact', 'Message Count', 'Lead Status', 'Notes']);
-  }
-  
-  // Conversations sheet
-  sheet = ss.getSheetByName('Conversations');
-  if (!sheet) {
-    sheet = ss.insertSheet('Conversations');
-  }
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Phone Number', 'Timestamp', 'User Message', 'AI Response']);
-  }
-  
-  // Leads sheet
-  sheet = ss.getSheetByName('Leads');
-  if (!sheet) {
-    sheet = ss.insertSheet('Leads');
-  }
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Phone Number', 'Name', 'Timestamp', 'Status', 'Score', 'Interests', 'Budget', 'Notes']);
+    sheet.appendRow(['Timestamp', 'Contact Name', 'Phone Number', 'Message Type', 'Message', 'Lead Status', 'Lead Score']);
+    // Make header bold and frozen
+    sheet.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#4285f4').setFontColor('#ffffff');
+    sheet.setFrozenRows(1);
   }
   
   return ContentService.createTextOutput(
