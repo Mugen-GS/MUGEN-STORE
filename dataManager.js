@@ -1,109 +1,156 @@
 const { getSheetValues, appendSheetValues, updateSheetValues } = require('./sheetsService');
 
-const SHEET_NAME = 'Mugen Store Chats';
-
 // User management
 const getUser = async (phoneNumber) => {
-  // Not needed for single sheet approach
-  return null;
-};
-
-const createOrUpdateUser = async (phoneNumber, name = null) => {
-  // User info is tracked in each message row
+  const rows = await getSheetValues('Users');
+  const userRow = rows.slice(1).find(row => row[0] === phoneNumber); // Skip header row
+  
+  if (!userRow) return null;
+  
   return {
-    phoneNumber,
-    name: name || 'Unknown'
+    phoneNumber: userRow[0],
+    name: userRow[1],
+    firstContactDate: userRow[2],
+    lastContactDate: userRow[3],
+    messageCount: parseInt(userRow[4]) || 0,
+    leadStatus: userRow[5],
+    notes: userRow[6] || ''
   };
 };
 
+const createOrUpdateUser = async (phoneNumber, name = null) => {
+  const rows = await getSheetValues('Users');
+  const users = rows.slice(1); // Skip header
+  const userIndex = users.findIndex(row => row[0] === phoneNumber);
+  
+  if (userIndex !== -1) {
+    // Update existing user
+    const existingUser = users[userIndex];
+    const updatedRow = [
+      phoneNumber,
+      name || existingUser[1],
+      existingUser[2], // Keep first contact date
+      new Date().toISOString(),
+      (parseInt(existingUser[4]) || 0) + 1,
+      existingUser[5],
+      existingUser[6] || ''
+    ];
+    
+    await updateSheetValues('Users', userIndex + 2, updatedRow); // +2 because: 1 for header, 1 for 1-based index
+    
+    return {
+      phoneNumber: updatedRow[0],
+      name: updatedRow[1],
+      firstContactDate: updatedRow[2],
+      lastContactDate: updatedRow[3],
+      messageCount: updatedRow[4],
+      leadStatus: updatedRow[5],
+      notes: updatedRow[6]
+    };
+  } else {
+    // Create new user
+    const newRow = [
+      phoneNumber,
+      name || 'Unknown',
+      new Date().toISOString(),
+      new Date().toISOString(),
+      1,
+      'browsing',
+      ''
+    ];
+    
+    await appendSheetValues('Users', newRow);
+    
+    return {
+      phoneNumber: newRow[0],
+      name: newRow[1],
+      firstContactDate: newRow[2],
+      lastContactDate: newRow[3],
+      messageCount: newRow[4],
+      leadStatus: newRow[5],
+      notes: newRow[6]
+    };
+  }
+};
+
 // Conversation management
-const saveConversation = async (phoneNumber, userName, userMessage, aiResponse) => {
-  const timestamp = new Date().toISOString();
-  
-  // Save user message
-  const userRow = [
-    timestamp,
-    userName,
+const saveConversation = async (phoneNumber, userMessage, aiResponse) => {
+  const row = [
     phoneNumber,
-    'User',
+    new Date().toISOString(),
     userMessage,
-    '',
-    ''
+    aiResponse
   ];
-  await appendSheetValues(SHEET_NAME, userRow);
   
-  // Save AI response
-  const aiRow = [
-    timestamp,
-    userName,
-    phoneNumber,
-    'AI',
-    aiResponse,
-    '',
-    ''
-  ];
-  await appendSheetValues(SHEET_NAME, aiRow);
+  await appendSheetValues('Conversations', row);
 };
 
 const getUserConversationHistory = async (phoneNumber, limit = 10) => {
-  const rows = await getSheetValues(SHEET_NAME);
+  const rows = await getSheetValues('Conversations');
   const conversations = rows.slice(1); // Skip header
   
   const userConversations = conversations
-    .filter(row => row[2] === phoneNumber && (row[3] === 'User' || row[3] === 'AI'))
+    .filter(row => row[0] === phoneNumber)
     .map(row => ({
-      phoneNumber: row[2],
-      timestamp: row[0],
-      userMessage: row[3] === 'User' ? row[4] : '',
-      aiResponse: row[3] === 'AI' ? row[4] : ''
-    }))
-    .filter(conv => conv.userMessage || conv.aiResponse);
+      phoneNumber: row[0],
+      timestamp: row[1],
+      userMessage: row[2],
+      aiResponse: row[3]
+    }));
   
-  // Group user/AI pairs
-  const paired = [];
-  for (let i = 0; i < userConversations.length; i += 2) {
-    if (userConversations[i] && userConversations[i + 1]) {
-      paired.push({
-        phoneNumber,
-        timestamp: userConversations[i].timestamp,
-        userMessage: userConversations[i].userMessage,
-        aiResponse: userConversations[i + 1].aiResponse
-      });
-    }
-  }
-  
-  return paired.slice(-limit);
+  return userConversations.slice(-limit);
 };
 
 // Lead management
 const saveLead = async (phoneNumber, name, leadData = {}) => {
-  const timestamp = new Date().toISOString();
+  const rows = await getSheetValues('Leads');
+  const leads = rows.slice(1); // Skip header
+  const leadIndex = leads.findIndex(row => row[0] === phoneNumber);
   
   const leadRow = [
-    timestamp,
-    name,
     phoneNumber,
-    'Lead Alert',
-    `🔥 LEAD DETECTED - Status: ${leadData.status || 'interested'} | ${leadData.notes || ''}`,
+    name,
+    new Date().toISOString(),
     leadData.status || 'interested',
-    leadData.score || 50
+    leadData.score || 50,
+    Array.isArray(leadData.interests) ? leadData.interests.join(', ') : '',
+    leadData.budget || '',
+    leadData.notes || ''
   ];
   
-  await appendSheetValues(SHEET_NAME, leadRow);
+  if (leadIndex !== -1) {
+    // Update existing lead
+    await updateSheetValues('Leads', leadIndex + 2, leadRow); // +2 for header and 1-based index
+  } else {
+    // Add new lead
+    await appendSheetValues('Leads', leadRow);
+  }
   
   return {
-    phoneNumber,
-    name,
-    timestamp,
-    status: leadData.status,
-    score: leadData.score,
-    notes: leadData.notes
+    phoneNumber: leadRow[0],
+    name: leadRow[1],
+    timestamp: leadRow[2],
+    status: leadRow[3],
+    score: leadRow[4],
+    interests: leadRow[5],
+    budget: leadRow[6],
+    notes: leadRow[7]
   };
 };
 
 const updateLeadStatus = async (phoneNumber, status) => {
-  // Not needed for append-only sheet
-  return true;
+  const rows = await getSheetValues('Leads');
+  const leads = rows.slice(1); // Skip header
+  const leadIndex = leads.findIndex(row => row[0] === phoneNumber);
+  
+  if (leadIndex !== -1) {
+    const existingLead = leads[leadIndex];
+    existingLead[3] = status; // Update status column
+    
+    await updateSheetValues('Leads', leadIndex + 2, existingLead);
+    return true;
+  }
+  return false;
 };
 
 module.exports = {
