@@ -34,16 +34,24 @@ async function getSheetValues(sheetName) {
  */
 async function appendSheetValues(sheetName, values) {
   try {
+    if (!APPS_SCRIPT_URL) {
+      console.error('❌ APPS_SCRIPT_URL is not set in environment variables!');
+      return { success: false, error: 'No Apps Script URL configured' };
+    }
+    
+    console.log(`📝 Saving to ${sheetName}:`, values);
+    
     const response = await axios.post(
       `${APPS_SCRIPT_URL}?action=appendRow&sheet=${sheetName}`,
       { values },
       { headers: { 'Content-Type': 'application/json' } }
     );
 
+    console.log(`✅ Saved to ${sheetName}:`, response.data);
     return response.data;
   } catch (error) {
-    console.error('Error appending to Google Sheets:', error.message);
-    throw error;
+    console.error(`❌ Error appending to ${sheetName}:`, error.response?.data || error.message);
+    return { success: false, error: error.message };
   }
 }
 
@@ -55,16 +63,24 @@ async function appendSheetValues(sheetName, values) {
  */
 async function updateSheetValues(sheetName, rowIndex, values) {
   try {
+    if (!APPS_SCRIPT_URL) {
+      console.error('❌ APPS_SCRIPT_URL is not set in environment variables!');
+      return { success: false, error: 'No Apps Script URL configured' };
+    }
+    
+    console.log(`📝 Updating ${sheetName} row ${rowIndex}:`, values);
+    
     const response = await axios.post(
       `${APPS_SCRIPT_URL}?action=updateRow&sheet=${sheetName}`,
       { row: rowIndex, values },
       { headers: { 'Content-Type': 'application/json' } }
     );
 
+    console.log(`✅ Updated ${sheetName}:`, response.data);
     return response.data;
   } catch (error) {
-    console.error('Error updating Google Sheets:', error.message);
-    throw error;
+    console.error(`❌ Error updating ${sheetName}:`, error.response?.data || error.message);
+    return { success: false, error: error.message };
   }
 }
 
@@ -73,6 +89,14 @@ async function updateSheetValues(sheetName, rowIndex, values) {
  */
 async function initializeSheets() {
   try {
+    if (!APPS_SCRIPT_URL) {
+      console.error('❌ APPS_SCRIPT_URL is not set in environment variables!');
+      console.log('ℹ️  Set APPS_SCRIPT_URL in Render dashboard to enable Google Sheets');
+      return;
+    }
+    
+    console.log('🔄 Initializing Google Sheets...');
+    
     const response = await axios.post(
       `${APPS_SCRIPT_URL}?action=initializeHeaders`,
       {},
@@ -81,9 +105,12 @@ async function initializeSheets() {
 
     if (response.data.success) {
       console.log('📊 Google Sheets ready!');
+    } else {
+      console.error('❌ Failed to initialize sheets:', response.data);
     }
   } catch (error) {
-    console.error('Error initializing sheets:', error.message);
+    console.error('❌ Error initializing sheets:', error.response?.data || error.message);
+    console.log('ℹ️  Check if Apps Script is deployed and APPS_SCRIPT_URL is correct');
   }
 }
 
