@@ -28,7 +28,8 @@ async function getTrainingData() {
         const sender = row[1] || '';
         const message = row[2] || '';
         
-        if (!message.trim()) return;
+        // Skip if message is not a string or is empty
+        if (typeof message !== 'string' || !message.trim()) return;
         
         currentConvo.push({ sender, message });
         
@@ -44,6 +45,7 @@ async function getTrainingData() {
         conversations.push(currentConvo);
       }
       
+      console.log(`✅ Loaded ${conversations.length} training conversations`);
       return conversations;
     }
     
@@ -142,6 +144,7 @@ async function getCustomerHistory(phoneNumber, limit = 10) {
         }))
         .slice(-limit); // Get last N conversations
       
+      console.log(`📚 Loaded ${customerMessages.length} previous messages for ${phoneNumber}`);
       return customerMessages;
     }
     
@@ -159,11 +162,11 @@ async function buildEnhancedPrompt(phoneNumber = null) {
   const trainingData = await getTrainingData();
   const memory = await getAIMemory();
   
-  let prompt = `You are MUGEN's AI assistant for a WhatsApp business account. You must communicate EXACTLY like MUGEN.\n\n`;
+  let prompt = `You are MUGEN's AI assistant for WhatsApp. MUGEN sells sleeper PCs (office desktops upgraded with GPU and other gaming parts).\n\n`;
   
   // Add personality training from "TrainingChats" sheet
   if (trainingData.length > 0) {
-    prompt += `COMMUNICATION STYLE - Study how MUGEN talks:\n`;
+    prompt += `HOW TO TALK (copy MUGEN's style):\n`;
     trainingData.slice(0, 3).forEach((convo, i) => {
       prompt += `Example ${i + 1}:\n`;
       convo.forEach(msg => {
@@ -172,11 +175,13 @@ async function buildEnhancedPrompt(phoneNumber = null) {
       });
       prompt += `\n`;
     });
+  } else {
+    console.log('⚠️ No training data loaded from TrainingChats sheet');
   }
   
   // Add business context
   if (Object.keys(memory).length > 0) {
-    prompt += `\nBUSINESS KNOWLEDGE (use this to answer questions):\n`;
+    prompt += `\nWHAT MUGEN SELLS:\n`;
     
     for (const [category, items] of Object.entries(memory)) {
       prompt += `\n${category.toUpperCase()}:\n`;
@@ -184,30 +189,34 @@ async function buildEnhancedPrompt(phoneNumber = null) {
         prompt += `- ${key}: ${value}\n`;
       }
     }
+    console.log(`✅ Loaded business knowledge: ${Object.keys(memory).join(', ')}`);
+  } else {
+    console.log('⚠️ No business knowledge in AI Memory sheet');
   }
   
   // Add customer conversation history if available
   if (phoneNumber) {
     const customerHistory = await getCustomerHistory(phoneNumber);
     if (customerHistory.length > 0) {
-      prompt += `\n=== PREVIOUS MESSAGES WITH THIS CUSTOMER ===\n`;
-      customerHistory.forEach(msg => {
+      prompt += `\n=== YOUR PREVIOUS CHAT WITH THIS CUSTOMER ===\n`;
+      customerHistory.forEach((msg, idx) => {
+        prompt += `[Message ${idx + 1}]\n`;
         prompt += `Customer: ${msg.userMessage}\n`;
-        prompt += `You replied: ${msg.aiResponse}\n\n`;
+        prompt += `You: ${msg.aiResponse}\n\n`;
       });
-      prompt += `=== END OF PREVIOUS MESSAGES ===\n\n`;
+      prompt += `=== END PREVIOUS CHAT ===\n\n`;
     } else {
-      prompt += `\n(This is the first message from this customer - no previous conversation history)\n\n`;
+      prompt += `\n(NEW CUSTOMER - No previous messages)\n\n`;
     }
   }
   
-  prompt += `\nCRITICAL RULES:
-1. NEVER claim to remember things unless they are in the "PREVIOUS MESSAGES" section above
-2. If there's no previous conversation, SAY "This is our first chat" or "I don't have previous messages from you"
-3. If asked about previous messages, ONLY reference what's in the PREVIOUS MESSAGES section
-4. Respond EXACTLY like MUGEN - casual, direct, no corporate AI talk
-5. Keep it short (1-3 sentences) unless explaining something technical
-6. NO PLACEHOLDERS like [mention the topic] - only use real info from memory\n\n`;
+  prompt += `\nRULES:
+1. ONLY say "first chat" if there's NO previous messages above
+2. If previous messages exist, reference them naturally ("like we talked about...", "you mentioned...")
+3. Talk EXACTLY like MUGEN - casual, direct, helpful
+4. Use info from "WHAT MUGEN SELLS" section to answer questions
+5. Keep it SHORT (1-2 sentences unless technical)
+6. NEVER make up info - only use what's in this prompt\n\n`;
   
   return prompt;
 }

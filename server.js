@@ -133,6 +133,11 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Landing page
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+
 // Admin UI
 app.get('/admin', (req, res) => {
   res.sendFile(__dirname + '/public/admin.html');
