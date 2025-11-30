@@ -145,12 +145,19 @@ async function getCustomerHistory(phoneNumber, limit = 10) {
         .slice(-limit); // Get last N conversations
       
       console.log(`📚 Loaded ${customerMessages.length} previous messages for ${phoneNumber}`);
+      if (customerMessages.length > 0) {
+        console.log('📝 Sample messages:');
+        customerMessages.slice(0, 2).forEach((msg, idx) => {
+          console.log(`  ${idx+1}. User: ${msg.userMessage.substring(0, 50)}...`);
+          console.log(`     AI: ${msg.aiResponse.substring(0, 50)}...`);
+        });
+      }
       return customerMessages;
     }
     
     return [];
   } catch (error) {
-    console.error('Error loading customer history:', error.message);
+    console.error('❌ Error loading customer history:', error.message);
     return [];
   }
 }
@@ -159,8 +166,14 @@ async function getCustomerHistory(phoneNumber, limit = 10) {
  * Build enhanced system prompt with personality + context
  */
 async function buildEnhancedPrompt(phoneNumber = null) {
+  console.log(`\n=== 🧠 BUILDING AI PROMPT ===`);
+  console.log(`Phone number: ${phoneNumber || 'None'}`);
+  
   const trainingData = await getTrainingData();
   const memory = await getAIMemory();
+  
+  console.log(`Training examples: ${trainingData.length}`);
+  console.log(`Memory categories: ${Object.keys(memory).length}`);
   
   let prompt = `You are MUGEN's AI assistant for WhatsApp. MUGEN sells sleeper PCs (office desktops upgraded with GPU and other gaming parts).\n\n`;
   
@@ -205,18 +218,27 @@ async function buildEnhancedPrompt(phoneNumber = null) {
         prompt += `You: ${msg.aiResponse}\n\n`;
       });
       prompt += `=== END PREVIOUS CHAT ===\n\n`;
+      console.log(`✅ Added ${customerHistory.length} previous messages to prompt`);
     } else {
       prompt += `\n(NEW CUSTOMER - No previous messages)\n\n`;
+      console.log('⚠️ No previous conversation history for this customer');
     }
   }
   
   prompt += `\nRULES:
 1. ONLY say "first chat" if there's NO previous messages above
-2. If previous messages exist, reference them naturally ("like we talked about...", "you mentioned...")
+2. If previous messages exist, reference them naturally ("like we talked about...", "you mentioned...", "as discussed earlier...")
 3. Talk EXACTLY like MUGEN - casual, direct, helpful
 4. Use info from "WHAT MUGEN SELLS" section to answer questions
 5. Keep it SHORT (1-2 sentences unless technical)
-6. NEVER make up info - only use what's in this prompt\n\n`;
+6. NEVER make up info - only use what's in this prompt
+7. If customer asks about something from previous chat, quote or reference it specifically
+8. If customer is returning, acknowledge it: "Hey again!" or "Welcome back!"
+9. If customer asks about something NOT in previous chats, say you don't remember that specific detail
+10. Always be honest about what you do/don't know from past conversations\n\n`;
+  
+  console.log(`Prompt length: ${prompt.length} characters`);
+  console.log('========================\n');
   
   return prompt;
 }

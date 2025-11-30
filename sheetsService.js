@@ -8,6 +8,7 @@ const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
  */
 async function getSheetValues(sheetName) {
   try {
+    console.log(`🔍 Reading from sheet: ${sheetName}`);
     const response = await axios.get(APPS_SCRIPT_URL, {
       params: {
         action: 'getRows',
@@ -16,13 +17,14 @@ async function getSheetValues(sheetName) {
     });
 
     if (response.data.success) {
+      console.log(`✅ Successfully read ${response.data.data?.length || 0} rows from ${sheetName}`);
       return response.data.data || [];
     }
     
-    console.error('Error from Apps Script:', response.data.error);
+    console.error('❌ Error from Apps Script:', response.data.error);
     return [];
   } catch (error) {
-    console.error('Error reading from Google Sheets:', error.message);
+    console.error('❌ Error reading from Google Sheets:', error.message);
     return [];
   }
 }

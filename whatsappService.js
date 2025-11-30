@@ -26,10 +26,10 @@ async function sendWhatsAppMessage(to, message) {
       }
     });
     
-    console.log(`Message sent to ${to}:`, response.data);
+    console.log(`📤 WhatsApp Message Sent to ${to}: ${message}`);
     return response.data;
   } catch (error) {
-    console.error('Error sending WhatsApp message:', error.response?.data || error.message);
+    console.error('❌ WhatsApp Error:', error.response?.data?.error?.message || error.message);
     throw error;
   }
 }

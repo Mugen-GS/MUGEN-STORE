@@ -137,6 +137,23 @@
             animation: pulse 2s infinite;
         }
 
+        .nav-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            color: white;
+            transition: all 0.2s;
+            margin: 0 5px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
@@ -146,6 +163,11 @@
 <body>
     <div class="container">
         <div class="header">
+            <div style="margin-bottom: 15px;">
+                <button class="nav-btn" onclick="window.location.href='/teach'">🎓 Teach AI</button>
+                <button class="nav-btn" onclick="window.location.href='/test'">🧪 Test AI</button>
+                <button class="nav-btn" onclick="window.location.href='/admin'">⚙️ Admin</button>
+            </div>
             <h1>🤖 MUGEN AI Dashboard</h1>
             <p>WhatsApp AI Assistant - Powered by Google Gemini</p>
         </div>

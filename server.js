@@ -36,10 +36,26 @@ app.post('/webhook', async (req, res) => {
   try {
     const body = req.body;
     
-    // Log full webhook data for debugging
-    console.log('\n=== WEBHOOK RECEIVED ===');
-    console.log(JSON.stringify(body, null, 2));
-    console.log('========================\n');
+    // Log simplified webhook data for debugging
+    console.log('\n=== 📥 WHATSAPP WEBHOOK RECEIVED ===');
+    if (body.object === 'whatsapp_business_account') {
+      const entries = body.entry || [];
+      entries.forEach((entry, entryIdx) => {
+        const changes = entry.changes || [];
+        changes.forEach((change, changeIdx) => {
+          if (change.value?.messages?.length > 0) {
+            const msg = change.value.messages[0];
+            console.log(`📨 Message ${entryIdx+1}.${changeIdx+1}: ${msg.from} -> "${msg.text?.body || 'Non-text message'}"`);
+          } else if (change.value?.statuses?.length > 0) {
+            const status = change.value.statuses[0];
+            console.log(`📊 Status ${entryIdx+1}.${changeIdx+1}: ${status.status} for message ${status.id?.substring(0, 20)}...`);
+          }
+        });
+      });
+    } else {
+      console.log('Unknown webhook object:', body.object);
+    }
+    console.log('=====================================\n');
 
     // Check if it's a WhatsApp message
     if (body.object === 'whatsapp_business_account') {
@@ -65,7 +81,9 @@ app.post('/webhook', async (req, res) => {
             if (messageType === 'text') {
               const userMessage = message.text.body;
               
-              console.log(`\n📨 Message from ${contactName} (${from}): ${userMessage}`);
+              console.log(`\n=== 📱 WHATSAPP CHAT ===`);
+              console.log(`From: ${from} (${contactName})`);
+              console.log(`Message: ${userMessage}`);
 
               // Mark message as read
               await markAsRead(messageId);
@@ -78,6 +96,9 @@ app.post('/webhook', async (req, res) => {
 
               // Save conversation
               await saveConversation(from, userMessage, aiResponse);
+
+              console.log(`AI Response: ${aiResponse}`);
+              console.log('====================\n');
 
               // Detect buying intent
               const hasBuyingIntent = detectBuyingIntent(userMessage);
@@ -102,7 +123,7 @@ app.post('/webhook', async (req, res) => {
 
               // Send AI response back to user
               await sendWhatsAppMessage(from, aiResponse);
-              console.log(`✅ Response sent: ${aiResponse}\n`);
+              console.log(`✅ Response sent to ${contactName}: ${aiResponse}\n`);
             } else {
               console.log(`ℹ️ Received ${messageType} message from ${from} - not handled yet`);
             }
@@ -283,6 +304,10 @@ app.post('/api/test/chat', async (req, res) => {
   try {
     const { message, phone } = req.body;
     
+    console.log(`\n=== 🧪 TEST CHAT ===`);
+    console.log(`Phone: ${phone}`);
+    console.log(`Message: ${message}`);
+    
     // Save/update user
     await createOrUpdateUser(phone, 'Test User');
     
@@ -291,6 +316,9 @@ app.post('/api/test/chat', async (req, res) => {
     
     // Save conversation
     await saveConversation(phone, message, aiResponse);
+    
+    console.log(`AI Response: ${aiResponse}`);
+    console.log('==================\n');
     
     res.json({ response: aiResponse });
   } catch (error) {
@@ -303,7 +331,9 @@ app.post('/api/test/chat', async (req, res) => {
 app.get('/api/test/history', async (req, res) => {
   try {
     const phone = req.query.phone;
+    console.log(`🔍 Loading history for phone: ${phone}`);
     const history = await getUserConversationHistory(phone, 20);
+    console.log(`📊 Found ${history.length} history items`);
     res.json({ history });
   } catch (error) {
     console.error('Error loading history:', error.message);

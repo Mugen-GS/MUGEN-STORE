@@ -95,11 +95,34 @@
             padding: 0 8px;
         }
 
-        .save-indicator {
-            font-size: 10px;
-            color: #4caf50;
-            margin-top: 4px;
-            padding: 0 8px;
+        .nav-bar {
+            background: #f0f0f0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .nav-btn {
+            padding: 8px 16px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .nav-btn.active {
+            background: #667eea;
+            color: white;
         }
 
         .input-area {
@@ -161,6 +184,12 @@
 </head>
 <body>
     <div class="container">
+        <div class="nav-bar">
+            <button class="nav-btn" onclick="window.location.href='/'">🏠 Dashboard</button>
+            <button class="nav-btn active">🎓 Teach AI</button>
+            <button class="nav-btn" onclick="window.location.href='/test'">🧪 Test AI</button>
+            <button class="nav-btn" onclick="window.location.href='/admin'">⚙️ Admin</button>
+        </div>
         <div class="header">
             <h1>🎓 Teach MUGEN AI</h1>
             <p>Chat with the AI to teach it about your business</p>
