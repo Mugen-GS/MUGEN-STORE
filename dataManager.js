@@ -5,7 +5,17 @@ const getUser = async (phoneNumber) => {
   try {
     console.log(`👤 Getting user: ${phoneNumber}`);
     const rows = await getSheetValues('Users');
-    const userRow = rows.slice(1).find(row => row[0] === phoneNumber); // Skip header row
+    console.log(`📋 All user rows:`, rows.length);
+    if (rows.length > 0) {
+      console.log(`📋 Header row:`, rows[0]);
+      console.log(`📋 First data row:`, rows[1]);
+      console.log(`📋 Looking for phone: ${phoneNumber}`);
+    }
+    const userRow = rows.slice(1).find(row => {
+      const match = row[0] === phoneNumber;
+      console.log(`  🔍 Comparing: '${row[0]}' === '${phoneNumber}' ? ${match}`);
+      return match;
+    }); // Skip header row
     
     if (!userRow) {
       console.log(`❓ User not found: ${phoneNumber}`);
@@ -32,8 +42,18 @@ const createOrUpdateUser = async (phoneNumber, name = null) => {
   try {
     console.log(`👤 Creating/updating user: ${phoneNumber} (${name})`);
     const rows = await getSheetValues('Users');
+    console.log(`📋 All user rows:`, rows.length);
+    if (rows.length > 0) {
+      console.log(`📋 Header row:`, rows[0]);
+      console.log(`📋 First data row:`, rows[1]);
+      console.log(`📋 Looking for phone: ${phoneNumber}`);
+    }
     const users = rows.slice(1); // Skip header
-    const userIndex = users.findIndex(row => row[0] === phoneNumber);
+    const userIndex = users.findIndex(row => {
+      const match = row[0] === phoneNumber;
+      console.log(`  🔍 Comparing: '${row[0]}' === '${phoneNumber}' ? ${match}`);
+      return match;
+    });
     
     if (userIndex !== -1) {
       // Update existing user
@@ -91,22 +111,6 @@ const createOrUpdateUser = async (phoneNumber, name = null) => {
   }
 };
 
-const saveConversation = async (phoneNumber, userMessage, aiResponse) => {
-  try {
-    console.log(`💾 Saving conversation for ${phoneNumber}`);
-    const row = [
-      phoneNumber,
-      new Date().toISOString(),
-      userMessage,
-      aiResponse
-    ];
-    
-    await appendSheetValues('Conversations', row);
-  } catch (error) {
-    console.error('Error saving conversation:', error.message);
-  }
-};
-
 const getUserConversationHistory = async (phoneNumber, limit = 10) => {
   try {
     console.log(`🔍 Loading conversation history for: ${phoneNumber}`);
@@ -118,7 +122,7 @@ const getUserConversationHistory = async (phoneNumber, limit = 10) => {
     const userConversations = conversations
       .filter(row => {
         const match = row[0] === phoneNumber;
-        console.log(`  Checking row: ${row[0]} === ${phoneNumber} ? ${match}`);
+        console.log(`  🔍 Filtering conversation: '${row[0]}' === '${phoneNumber}' ? ${match}`);
         return match;
       })
       .map(row => ({
@@ -140,6 +144,22 @@ const getUserConversationHistory = async (phoneNumber, limit = 10) => {
   } catch (error) {
     console.error('Error getting user conversation history:', error.message);
     return [];
+  }
+};
+
+const saveConversation = async (phoneNumber, userMessage, aiResponse) => {
+  try {
+    console.log(`💾 Saving conversation for ${phoneNumber}`);
+    const row = [
+      phoneNumber,
+      new Date().toISOString(),
+      userMessage,
+      aiResponse
+    ];
+    
+    await appendSheetValues('Conversations', row);
+  } catch (error) {
+    console.error('Error saving conversation:', error.message);
   }
 };
 
@@ -206,8 +226,6 @@ const updateLeadStatus = async (phoneNumber, status) => {
 };
 
 module.exports = {
-  getUser,
-  createOrUpdateUser,
   getUser,
   createOrUpdateUser,
   saveConversation,
