@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { getSheetValues } = require('./sheetsService');
 
 const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
 
@@ -119,57 +120,47 @@ async function addMemory(category, key, value, notes = '') {
 }
 
 /**
- * Get customer conversation history from "Mugen Store Chats" sheet
+ * Get customer conversation history from "Conversations" sheet
  * for maintaining context with returning customers
  */
 async function getCustomerHistory(phoneNumber, limit = 10) {
   try {
     console.log(`🔍 Loading customer history for: ${phoneNumber}`);
-    const response = await axios.get(APPS_SCRIPT_URL, {
-      params: {
-        action: 'getRows',
-        sheet: 'Conversations'
-      }
-    });
-
-    if (response.data.success) {
-      const rows = response.data.data.slice(1); // Skip header
-      console.log(`📋 Total conversation rows received: ${rows.length}`);
-      
-      // Filter for this customer's conversations
-      const customerMessages = rows
-        .filter(row => {
-          if (!row || row.length < 4) {
-            console.log(`  ❌ Skipping invalid row:`, row);
-            return false;
-          }
-          // Handle type differences - convert both to strings for comparison
-          const storedPhone = String(row[0]);
-          const searchPhone = String(phoneNumber);
-          const match = storedPhone === searchPhone;
-          console.log(`  🔍 Filtering conversation row: '${storedPhone}' === '${searchPhone}' ? ${match}`);
-          return match;
-        })
-        .map(row => ({
-          timestamp: row[1],
-          userMessage: row[2],
-          aiResponse: row[3]
-        }))
-        .slice(-limit); // Get last N conversations
-      
-      console.log(`📚 Loaded ${customerMessages.length} previous messages for ${phoneNumber}`);
-      if (customerMessages.length > 0) {
-        console.log('📝 Sample messages:');
-        customerMessages.slice(0, 2).forEach((msg, idx) => {
-          console.log(`  ${idx+1}. User: ${msg.userMessage.substring(0, 50)}...`);
-          console.log(`     AI: ${msg.aiResponse.substring(0, 50)}...`);
-        });
-      }
-      return customerMessages;
-    }
+    const rows = await getSheetValues('Conversations');
+    const conversations = rows.slice(1); // Skip header
     
-    console.log(`❌ Failed to load conversations:`, response.data.error);
-    return [];
+    console.log(`📋 Total conversation rows received: ${conversations.length}`);
+    
+    // Filter for this customer's conversations
+    const customerMessages = conversations
+      .filter(row => {
+        if (!row || row.length < 4) {
+          console.log(`  ❌ Skipping invalid row:`, row);
+          return false;
+        }
+        // Handle type differences - convert both to strings for comparison
+        const storedPhone = String(row[0]);
+        const searchPhone = String(phoneNumber);
+        const match = storedPhone === searchPhone;
+        console.log(`  🔍 Filtering conversation row: '${storedPhone}' === '${searchPhone}' ? ${match}`);
+        return match;
+      })
+      .map(row => ({
+        timestamp: row[1],
+        userMessage: row[2],
+        aiResponse: row[3]
+      }))
+      .slice(-limit); // Get last N conversations
+    
+    console.log(`📚 Loaded ${customerMessages.length} previous messages for ${phoneNumber}`);
+    if (customerMessages.length > 0) {
+      console.log('📝 Sample messages:');
+      customerMessages.slice(0, 2).forEach((msg, idx) => {
+        console.log(`  ${idx+1}. User: ${msg.userMessage.substring(0, 50)}...`);
+        console.log(`     AI: ${msg.aiResponse.substring(0, 50)}...`);
+      });
+    }
+    return customerMessages;
   } catch (error) {
     console.error('❌ Error loading customer history:', error.message);
     return [];
