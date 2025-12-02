@@ -12,8 +12,11 @@ const getUser = async (phoneNumber) => {
       console.log(`📋 Looking for phone: ${phoneNumber}`);
     }
     const userRow = rows.slice(1).find(row => {
-      const match = row[0] === phoneNumber;
-      console.log(`  🔍 Comparing: '${row[0]}' === '${phoneNumber}' ? ${match}`);
+      // Handle type differences - convert both to strings for comparison
+      const storedPhone = String(row[0]);
+      const searchPhone = String(phoneNumber);
+      const match = storedPhone === searchPhone;
+      console.log(`  🔍 Comparing: '${storedPhone}' === '${searchPhone}' ? ${match}`);
       return match;
     }); // Skip header row
     
@@ -50,8 +53,11 @@ const createOrUpdateUser = async (phoneNumber, name = null) => {
     }
     const users = rows.slice(1); // Skip header
     const userIndex = users.findIndex(row => {
-      const match = row[0] === phoneNumber;
-      console.log(`  🔍 Comparing: '${row[0]}' === '${phoneNumber}' ? ${match}`);
+      // Handle type differences - convert both to strings for comparison
+      const storedPhone = String(row[0]);
+      const searchPhone = String(phoneNumber);
+      const match = storedPhone === searchPhone;
+      console.log(`  🔍 Comparing: '${storedPhone}' === '${searchPhone}' ? ${match}`);
       return match;
     });
     
@@ -121,8 +127,11 @@ const getUserConversationHistory = async (phoneNumber, limit = 10) => {
     
     const userConversations = conversations
       .filter(row => {
-        const match = row[0] === phoneNumber;
-        console.log(`  🔍 Filtering conversation: '${row[0]}' === '${phoneNumber}' ? ${match}`);
+        // Handle type differences - convert both to strings for comparison
+        const storedPhone = String(row[0]);
+        const searchPhone = String(phoneNumber);
+        const match = storedPhone === searchPhone;
+        console.log(`  🔍 Filtering conversation: '${storedPhone}' === '${searchPhone}' ? ${match}`);
         return match;
       })
       .map(row => ({
@@ -168,7 +177,13 @@ const saveLead = async (phoneNumber, name, leadData = {}) => {
   try {
     const rows = await getSheetValues('Leads');
     const leads = rows.slice(1); // Skip header
-    const leadIndex = leads.findIndex(row => row[0] === phoneNumber);
+    const leadIndex = leads.findIndex(row => {
+      // Handle type differences - convert both to strings for comparison
+      const storedPhone = String(row[0]);
+      const searchPhone = String(phoneNumber);
+      const match = storedPhone === searchPhone;
+      return match;
+    });
     
     const leadRow = [
       phoneNumber,
@@ -209,7 +224,13 @@ const updateLeadStatus = async (phoneNumber, status) => {
   try {
     const rows = await getSheetValues('Leads');
     const leads = rows.slice(1); // Skip header
-    const leadIndex = leads.findIndex(row => row[0] === phoneNumber);
+    const leadIndex = leads.findIndex(row => {
+      // Handle type differences - convert both to strings for comparison
+      const storedPhone = String(row[0]);
+      const searchPhone = String(phoneNumber);
+      const match = storedPhone === searchPhone;
+      return match;
+    });
     
     if (leadIndex !== -1) {
       const existingLead = leads[leadIndex];
