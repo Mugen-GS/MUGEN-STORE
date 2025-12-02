@@ -124,6 +124,7 @@ async function addMemory(category, key, value, notes = '') {
  */
 async function getCustomerHistory(phoneNumber, limit = 10) {
   try {
+    console.log(`🔍 Loading customer history for: ${phoneNumber}`);
     const response = await axios.get(APPS_SCRIPT_URL, {
       params: {
         action: 'getRows',
@@ -133,10 +134,22 @@ async function getCustomerHistory(phoneNumber, limit = 10) {
 
     if (response.data.success) {
       const rows = response.data.data.slice(1); // Skip header
+      console.log(`📋 Total conversation rows received: ${rows.length}`);
       
       // Filter for this customer's conversations
       const customerMessages = rows
-        .filter(row => row[0] === phoneNumber)
+        .filter(row => {
+          if (!row || row.length < 4) {
+            console.log(`  ❌ Skipping invalid row:`, row);
+            return false;
+          }
+          // Handle type differences - convert both to strings for comparison
+          const storedPhone = String(row[0]);
+          const searchPhone = String(phoneNumber);
+          const match = storedPhone === searchPhone;
+          console.log(`  🔍 Filtering conversation row: '${storedPhone}' === '${searchPhone}' ? ${match}`);
+          return match;
+        })
         .map(row => ({
           timestamp: row[1],
           userMessage: row[2],
@@ -155,6 +168,7 @@ async function getCustomerHistory(phoneNumber, limit = 10) {
       return customerMessages;
     }
     
+    console.log(`❌ Failed to load conversations:`, response.data.error);
     return [];
   } catch (error) {
     console.error('❌ Error loading customer history:', error.message);
