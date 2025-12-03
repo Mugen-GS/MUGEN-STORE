@@ -47,13 +47,12 @@ async function getTrainingData() {
         conversations.push(currentConvo);
       }
       
-      console.log(`✅ Loaded ${conversations.length} training conversations`);
       return conversations;
     }
     
     return [];
   } catch (error) {
-    console.error('Error loading training data:', error.message);
+    console.error('[WARN] Failed to load training data:', error.message);
     return [];
   }
 }
@@ -94,7 +93,7 @@ async function getAIMemory() {
     
     return {};
   } catch (error) {
-    console.error('Error loading AI memory:', error.message);
+    console.error('[WARN] Failed to load AI memory:', error.message);
     return {};
   }
 }
@@ -112,10 +111,9 @@ async function addMemory(category, key, value, notes = '') {
       { headers: { 'Content-Type': 'application/json' } }
     );
 
-    console.log(`✅ Added to AI Memory: ${category} - ${key}`);
     return response.data;
   } catch (error) {
-    console.error('Error adding memory:', error.message);
+    console.error('[ERROR] Failed to add memory:', error.message);
     return { success: false };
   }
 }
@@ -126,21 +124,11 @@ async function addMemory(category, key, value, notes = '') {
  */
 async function getCustomerHistory(phoneNumber, limit = 10) {
   try {
-    console.log(`🔍 Loading customer history for: ${phoneNumber}`);
-    
     // Use the new efficient method to get chat history
     const customerMessages = await getContactChatHistory(phoneNumber, limit);
-    
-    console.log(`📚 Loaded ${customerMessages.length} previous messages for ${phoneNumber}`);
-    if (customerMessages.length > 0) {
-      console.log('📝 Sample messages:');
-      customerMessages.slice(0, 2).forEach((msg, idx) => {
-        console.log(`  ${idx+1}. ${msg.role}: ${msg.message.substring(0, 50)}...`);
-      });
-    }
     return customerMessages;
   } catch (error) {
-    console.error('❌ Error loading customer history:', error.message);
+    console.error('[ERROR] Failed to load customer history:', error.message);
     return [];
   }
 }
@@ -149,14 +137,8 @@ async function getCustomerHistory(phoneNumber, limit = 10) {
  * Build enhanced system prompt with personality + context
  */
 async function buildEnhancedPrompt(phoneNumber = null) {
-  console.log(`\n=== 🧠 BUILDING AI PROMPT ===`);
-  console.log(`Phone number: ${phoneNumber || 'None'}`);
-  
   const trainingData = await getTrainingData();
   const memory = await getAIMemory();
-  
-  console.log(`Training examples: ${trainingData.length}`);
-  console.log(`Memory categories: ${Object.keys(memory).length}`);
   
   let prompt = `You are MUGEN's AI assistant for WhatsApp. MUGEN sells sleeper PCs (office desktops upgraded with GPU and other gaming parts).\n\n`;
   
@@ -171,8 +153,6 @@ async function buildEnhancedPrompt(phoneNumber = null) {
       });
       prompt += `\n`;
     });
-  } else {
-    console.log('⚠️ No training data loaded from TrainingChats sheet');
   }
   
   // Add business context
@@ -185,9 +165,6 @@ async function buildEnhancedPrompt(phoneNumber = null) {
         prompt += `- ${key}: ${value}\n`;
       }
     }
-    console.log(`✅ Loaded business knowledge: ${Object.keys(memory).join(', ')}`);
-  } else {
-    console.log('⚠️ No business knowledge in AI Memory sheet');
   }
   
   // Add customer conversation history if available
@@ -200,10 +177,6 @@ async function buildEnhancedPrompt(phoneNumber = null) {
         prompt += `${msg.role === 'user' ? 'Customer' : 'You'}: ${msg.message}\n\n`;
       });
       prompt += `=== END PREVIOUS CHAT ===\n\n`;
-      console.log(`✅ Added ${customerHistory.length} previous messages to prompt`);
-    } else {
-      prompt += `\n(NEW CUSTOMER - No previous messages)\n\n`;
-      console.log('⚠️ No previous conversation history for this customer');
     }
   }
   
@@ -218,9 +191,6 @@ async function buildEnhancedPrompt(phoneNumber = null) {
 8. If customer is returning, acknowledge it: "Hey again!" or "Welcome back!"
 9. If customer asks about something NOT in previous chats, say you don't remember that specific detail
 10. Always be honest about what you do/don't know from past conversations\n\n`;
-  
-  console.log(`Prompt length: ${prompt.length} characters`);
-  console.log('========================\n');
   
   return prompt;
 }

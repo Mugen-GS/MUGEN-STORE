@@ -13,17 +13,6 @@ async function getGeminiResponse(userMessage, conversationHistory = [], phoneNum
     // Build enhanced prompt with personality + customer context from sheets
     const systemInstruction = await buildEnhancedPrompt(phoneNumber);
     
-    // DEBUG: Log what we're sending to AI
-    console.log('\n=== AI CONTEXT DEBUG ===');
-    console.log('Phone:', phoneNumber);
-    console.log('Prompt length:', systemInstruction.length, 'characters');
-    if (phoneNumber && systemInstruction.includes('PREVIOUS MESSAGES')) {
-      console.log('✅ Customer history loaded');
-    } else if (phoneNumber) {
-      console.log('⚠️ No previous conversation history');
-    }
-    console.log('========================\n');
-    
     let prompt = systemInstruction + '\n\n';
     
     // Add current message
@@ -49,7 +38,7 @@ async function getGeminiResponse(userMessage, conversationHistory = [], phoneNum
     const text = response.data.candidates[0].content.parts[0].text;
     return text.trim();
   } catch (error) {
-    console.error('Error calling Gemini API:', error.response?.data || error.message);
+    console.error('[ERROR] Failed to call Gemini API:', error.message);
     
     // Fallback response if API fails
     return "Hello! I'm here to help you. How can I assist you today?";
@@ -88,7 +77,7 @@ function calculateLeadScore(conversationHistory) {
   
   // Check for buying intent in messages
   const buyingMessages = conversationHistory.filter(msg => 
-    detectBuyingIntent(msg.userMessage)
+    detectBuyingIntent(msg.message) && msg.role === 'user'
   );
   score += buyingMessages.length * 20;
   

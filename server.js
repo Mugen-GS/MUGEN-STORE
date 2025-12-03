@@ -27,8 +27,6 @@ const { getTrainingData, getAIMemory, addMemory, buildEnhancedPrompt } = require
 // WhatsApp webhook endpoint
 app.post('/webhook', async (req, res) => {
   try {
-    console.log('\n=== 📱 NEW WHATSAPP MESSAGE ===');
-    
     const body = req.body;
     
     // Verify webhook (if needed)
@@ -44,18 +42,17 @@ app.post('/webhook', async (req, res) => {
             const messageType = message.type;
             const messageId = message.id;
             
-            console.log(`📩 From: ${from}, Type: ${messageType}`);
-            
             // Mark message as read
             try {
               await markAsRead(messageId);
             } catch (readError) {
-              console.error('Error marking message as read:', readError.message);
+              console.error('[WARN] Failed to mark message as read:', readError.message);
             }
             
             if (messageType === 'text') {
               const userMessage = message.text.body;
-              console.log(`💬 Message: ${userMessage}`);
+              console.log(`\n=== 📱 NEW MESSAGE FROM ${from} ===`);
+              console.log(`Message: ${userMessage}`);
               
               // Get or create contact with normalized phone number
               let contact = await getContact(from);
@@ -78,7 +75,7 @@ app.post('/webhook', async (req, res) => {
               const hasBuyingIntent = detectBuyingIntent(userMessage);
               
               if (hasBuyingIntent) {
-                console.log(`🔥 BUYING INTENT DETECTED from ${contactName}!`);
+                console.log(`[INFO] Buying intent detected from ${contactName}`);
                 
                 // Calculate lead score
                 const allHistory = await getContactChatHistory(from, 100);
@@ -91,25 +88,29 @@ app.post('/webhook', async (req, res) => {
                   await updateContactLeadStatus(from, 'interested');
                 }
                 
-                console.log(`💾 Contact updated with lead score: ${leadScore}/100`);
+                console.log(`[INFO] Lead score for ${contactName}: ${leadScore}/100`);
               }
               
               // Send AI response back to user
               try {
                 await sendWhatsAppMessage(from, aiResponse);
-                console.log(`✅ Response sent to ${contactName}: ${aiResponse}\n`);
+                console.log(`[INFO] Response sent to ${contactName}`);
+                console.log(`Response: ${aiResponse}`);
               } catch (sendError) {
-                console.error(`❌ Failed to send response to ${contactName}:`, sendError.message);
+                console.error(`[ERROR] Failed to send response to ${contactName}:`, sendError.message);
               }
             } else {
-              console.log(`ℹ️ Received ${messageType} message from ${from} - not handled yet`);
+              console.log(`[INFO] Received ${messageType} message from ${from} - not handled yet`);
             }
           }
           
           // Handle message status updates (delivered, read, etc.)
           if (value.statuses && value.statuses.length > 0) {
             const status = value.statuses[0];
-            console.log(`📊 Status update: ${status.status} for message ${status.id}`);
+            // Only log errors or important statuses
+            if (status.status !== 'sent' && status.status !== 'delivered' && status.status !== 'read') {
+              console.log(`[STATUS] ${status.status} for message ${status.id}`);
+            }
           }
         }
       }
@@ -117,7 +118,7 @@ app.post('/webhook', async (req, res) => {
     
     res.sendStatus(200);
   } catch (error) {
-    console.error('Error processing webhook:', error);
+    console.error('[ERROR] Failed to process webhook:', error);
     res.sendStatus(500);
   }
 });
@@ -304,8 +305,7 @@ app.post('/api/teach', async (req, res) => {
 app.post('/api/test-chat', async (req, res) => {
   try {
     const { message, phone = '+1234567890' } = req.body;
-    console.log(`\n=== 🧪 TESTING AI ===`);
-    console.log(`Phone: ${phone}`);
+    console.log(`\n=== 🧪 TESTING AI FOR ${phone} ===`);
     console.log(`Message: ${message}`);
     
     // Get or create contact
@@ -320,12 +320,11 @@ app.post('/api/test-chat', async (req, res) => {
     // Add messages to contact's chat history
     await addMessageToContactHistory(phone, message, aiResponse);
     
-    console.log(`AI Response: ${aiResponse}`);
-    console.log('==================\n');
+    console.log(`[INFO] AI Response: ${aiResponse}`);
     
     res.json({ response: aiResponse });
   } catch (error) {
-    console.error('Error in test chat:', error.message);
+    console.error('[ERROR] Test chat failed:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -334,12 +333,10 @@ app.post('/api/test-chat', async (req, res) => {
 app.get('/api/test-history', async (req, res) => {
   try {
     const phone = req.query.phone;
-    console.log(`🔍 Loading history for phone: ${phone}`);
     const history = await getContactChatHistory(phone, 20);
-    console.log(`📊 Found ${history.length} history items`);
     res.json({ history });
   } catch (error) {
-    console.error('Error loading history:', error.message);
+    console.error('[ERROR] Failed to load test history:', error.message);
     res.status(500).json({ error: error.message });
   }
 });

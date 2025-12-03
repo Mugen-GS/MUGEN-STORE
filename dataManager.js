@@ -1,3 +1,4 @@
+// Import Google Sheets service
 const { getSheetValues, appendSheetValues, updateSheetValues } = require('./sheetsService');
 
 // Contact management (replaces User management)
@@ -5,36 +6,20 @@ const getContact = async (phoneNumber) => {
   try {
     // Normalize phone number for consistent comparison
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
-    console.log(`👤 Getting contact: ${normalizedPhone}`);
     
     const rows = await getSheetValues('Contacts');
-    console.log(`🔍 Reading from sheet: Contacts`);
-    console.log(`📋 All contact rows:`, rows.length);
-    
-    if (rows.length > 0) {
-      console.log(`📋 Header row:`, rows[0]);
-      if (rows.length > 1) {
-        console.log(`📋 First data row:`, rows[1]);
-      }
-      console.log(`📋 Looking for phone: ${normalizedPhone}`);
-    }
-    
     const contactRow = rows.slice(1).find(row => {
       if (!row || row.length === 0) return false;
       // Normalize both phone numbers for comparison
       const storedPhone = normalizePhoneNumber(String(row[0] || ''));
       const searchPhone = normalizePhoneNumber(normalizedPhone);
-      const match = storedPhone === searchPhone;
-      console.log(`  🔍 Comparing: '${storedPhone}' === '${searchPhone}' ? ${match}`);
-      return match;
+      return storedPhone === searchPhone;
     }); // Skip header row
     
     if (!contactRow) {
-      console.log(`❓ Contact not found: ${normalizedPhone}`);
       return null;
     }
     
-    console.log(`✅ Found contact: ${normalizedPhone}`);
     return {
       phoneNumber: contactRow[0],
       name: contactRow[1],
@@ -44,10 +29,10 @@ const getContact = async (phoneNumber) => {
       leadStatus: contactRow[5],
       tags: contactRow[6] || '',
       notes: contactRow[7] || '',
-      chatHistory: contactRow[8] || '' // Chat history is now in column 9 (index 8), default to empty string if not present
+      chatHistory: contactRow[8] || '' // Chat history is now in column 9 (index 8)
     };
   } catch (error) {
-    console.error('Error getting contact:', error.message);
+    console.error('[ERROR] Failed to get contact:', error.message);
     return null;
   }
 };
@@ -56,36 +41,21 @@ const createOrUpdateContact = async (phoneNumber, name = null) => {
   try {
     // Normalize phone number for consistent storage
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
-    console.log(`👤 Creating/updating contact: ${normalizedPhone} (${name})`);
     
     const rows = await getSheetValues('Contacts');
-    console.log(`🔍 Reading from sheet: Contacts`);
-    console.log(`📋 All contact rows:`, rows.length);
-    
-    if (rows.length > 0) {
-      console.log(`📋 Header row:`, rows[0]);
-      if (rows.length > 1) {
-        console.log(`📋 First data row:`, rows[1]);
-      }
-      console.log(`📋 Looking for phone: ${normalizedPhone}`);
-    }
-    
     const contacts = rows.slice(1); // Skip header
     const contactIndex = contacts.findIndex(row => {
       if (!row || row.length === 0) return false;
       // Normalize both phone numbers for comparison
       const storedPhone = normalizePhoneNumber(String(row[0] || ''));
       const searchPhone = normalizePhoneNumber(normalizedPhone);
-      const match = storedPhone === searchPhone;
-      console.log(`  🔍 Comparing: '${storedPhone}' === '${searchPhone}' ? ${match}`);
-      return match;
+      return storedPhone === searchPhone;
     });
     
     const timestamp = new Date().toISOString();
     
     if (contactIndex !== -1) {
       // Update existing contact
-      console.log(`🔄 Updating existing contact: ${normalizedPhone}`);
       const existingContact = contacts[contactIndex];
       
       // Preserve chat history if it exists, otherwise use empty string
@@ -110,6 +80,8 @@ const createOrUpdateContact = async (phoneNumber, name = null) => {
       
       await updateSheetValues('Contacts', contactIndex + 2, updatedRow); // +2 because: 1 for header, 1 for 1-based index
       
+      console.log(`[INFO] Updated contact ${normalizedPhone}. Message count: ${updatedRow[4]}`);
+      
       return {
         phoneNumber: updatedRow[0],
         name: updatedRow[1],
@@ -123,7 +95,6 @@ const createOrUpdateContact = async (phoneNumber, name = null) => {
       };
     } else {
       // Create new contact
-      console.log(`🆕 Creating new contact: ${normalizedPhone}`);
       const newRow = [
         normalizedPhone, // Use normalized phone number
         name || 'Unknown',
@@ -138,6 +109,8 @@ const createOrUpdateContact = async (phoneNumber, name = null) => {
       
       await appendSheetValues('Contacts', newRow);
       
+      console.log(`[INFO] Created new contact ${normalizedPhone}`);
+      
       return {
         phoneNumber: newRow[0],
         name: newRow[1],
@@ -151,7 +124,7 @@ const createOrUpdateContact = async (phoneNumber, name = null) => {
       };
     }
   } catch (error) {
-    console.error('Error creating/updating contact:', error.message);
+    console.error('[ERROR] Failed to create/update contact:', error.message);
     return null;
   }
 };
@@ -161,7 +134,6 @@ const addMessageToContactHistory = async (phoneNumber, userMessage, aiResponse) 
   try {
     // Normalize phone number for consistent storage
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
-    console.log(`💬 Adding message to contact history: ${normalizedPhone}`);
     
     const rows = await getSheetValues('Contacts');
     const contacts = rows.slice(1); // Skip header
@@ -170,8 +142,7 @@ const addMessageToContactHistory = async (phoneNumber, userMessage, aiResponse) 
       // Normalize both phone numbers for comparison
       const storedPhone = normalizePhoneNumber(String(row[0] || ''));
       const searchPhone = normalizePhoneNumber(normalizedPhone);
-      const match = storedPhone === searchPhone;
-      return match;
+      return storedPhone === searchPhone;
     });
     
     if (contactIndex !== -1) {
@@ -205,14 +176,12 @@ const addMessageToContactHistory = async (phoneNumber, userMessage, aiResponse) 
       
       await updateSheetValues('Contacts', contactIndex + 2, existingContact);
       
-      console.log(`✅ Updated contact chat history for: ${normalizedPhone}`);
       return true;
     }
     
-    console.log(`❓ Contact not found for chat history update: ${normalizedPhone}`);
     return false;
   } catch (error) {
-    console.error('Error updating contact chat history:', error.message);
+    console.error('[ERROR] Failed to update contact chat history:', error.message);
     return false;
   }
 };
@@ -222,7 +191,6 @@ const getContactChatHistory = async (phoneNumber, limit = 10) => {
   try {
     // Normalize phone number for consistent lookup
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
-    console.log(`🔍 Loading chat history for: ${normalizedPhone}`);
     
     const contact = await getContact(normalizedPhone);
     
@@ -242,14 +210,12 @@ const getContactChatHistory = async (phoneNumber, limit = 10) => {
         }
       }
       
-      console.log(`📚 Loaded ${messages.length} previous messages for ${normalizedPhone}`);
       return messages.slice(-limit); // Return last N messages
     }
     
-    console.log(`⚠️ No chat history found for: ${normalizedPhone}`);
     return [];
   } catch (error) {
-    console.error('Error loading contact chat history:', error.message);
+    console.error('[ERROR] Failed to load contact chat history:', error.message);
     return [];
   }
 };
@@ -267,8 +233,7 @@ const updateContactLeadStatus = async (phoneNumber, status) => {
       // Normalize both phone numbers for comparison
       const storedPhone = normalizePhoneNumber(String(row[0] || ''));
       const searchPhone = normalizePhoneNumber(normalizedPhone);
-      const match = storedPhone === searchPhone;
-      return match;
+      return storedPhone === searchPhone;
     });
     
     if (contactIndex !== -1) {
@@ -276,11 +241,12 @@ const updateContactLeadStatus = async (phoneNumber, status) => {
       existingContact[5] = status; // Update lead status column (index 5)
       
       await updateSheetValues('Contacts', contactIndex + 2, existingContact);
+      console.log(`[INFO] Updated lead status for ${normalizedPhone} to ${status}`);
       return true;
     }
     return false;
   } catch (error) {
-    console.error('Error updating contact lead status:', error.message);
+    console.error('[ERROR] Failed to update contact lead status:', error.message);
     return false;
   }
 };

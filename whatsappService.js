@@ -38,10 +38,8 @@ async function sendWhatsAppMessage(to, message) {
       timeout: 10000 // 10 second timeout
     });
     
-    console.log(`📤 WhatsApp Message Sent to ${to}: ${cleanMessage}`);
     return response.data;
   } catch (error) {
-    console.error('❌ WhatsApp Error:', error.response?.data?.error?.message || error.message);
     throw error;
   }
 }
@@ -73,7 +71,6 @@ async function markAsRead(messageId) {
       timeout: 5000 // 5 second timeout
     });
   } catch (error) {
-    console.error('Error marking message as read:', error.response?.data || error.message);
     throw error;
   }
 }
