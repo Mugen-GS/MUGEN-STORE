@@ -41,14 +41,22 @@ app.post('/webhook', async (req, res) => {
             const message = value.messages[0];
             const from = message.from; // Phone number
             const messageType = message.type;
+            const messageId = message.id;
             
             console.log(`📩 From: ${from}, Type: ${messageType}`);
+            
+            // Mark message as read
+            try {
+              await markAsRead(messageId);
+            } catch (readError) {
+              console.error('Error marking message as read:', readError.message);
+            }
             
             if (messageType === 'text') {
               const userMessage = message.text.body;
               console.log(`💬 Message: ${userMessage}`);
               
-              // Get or create contact
+              // Get or create contact with normalized phone number
               let contact = await getContact(from);
               if (!contact) {
                 contact = await createOrUpdateContact(from);
@@ -56,27 +64,14 @@ app.post('/webhook', async (req, res) => {
                 contact = await createOrUpdateContact(from, contact.name);
               }
               
-              // Save user message
-              await saveMessage({
-                phoneNumber: from,
-                role: 'user',
-                message: userMessage,
-                sessionId: generateSessionId(from)
-              });
-              
               // Get contact name
               const contactName = contact.name || 'Customer';
               
               // Get AI response with full context
               const aiResponse = await getGeminiResponse(userMessage, [], from);
               
-              // Save AI response
-              await saveMessage({
-                phoneNumber: from,
-                role: 'assistant',
-                message: aiResponse,
-                sessionId: generateSessionId(from)
-              });
+              // Add messages to contact's chat history
+              await addMessageToContactHistory(from, userMessage, aiResponse);
               
               // Detect buying intent
               const hasBuyingIntent = detectBuyingIntent(userMessage);
@@ -85,7 +80,7 @@ app.post('/webhook', async (req, res) => {
                 console.log(`🔥 BUYING INTENT DETECTED from ${contactName}!`);
                 
                 // Calculate lead score
-                const allHistory = await getContactMessageHistory(from, 100);
+                const allHistory = await getContactChatHistory(from, 100);
                 const leadScore = calculateLeadScore(allHistory);
                 
                 // Update contact as lead
@@ -99,9 +94,12 @@ app.post('/webhook', async (req, res) => {
               }
               
               // Send AI response back to user
-              // Note: In a real implementation, you would uncomment this
-              // await sendWhatsAppMessage(from, aiResponse);
-              console.log(`✅ Response sent to ${contactName}: ${aiResponse}\n`);
+              try {
+                await sendWhatsAppMessage(from, aiResponse);
+                console.log(`✅ Response sent to ${contactName}: ${aiResponse}\n`);
+              } catch (sendError) {
+                console.error(`❌ Failed to send response to ${contactName}:`, sendError.message);
+              }
             } else {
               console.log(`ℹ️ Received ${messageType} message from ${from} - not handled yet`);
             }

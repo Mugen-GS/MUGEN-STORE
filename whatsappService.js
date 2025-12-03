@@ -7,6 +7,17 @@ const axios = require('axios');
  * @returns {Promise<Object>} API response
  */
 async function sendWhatsAppMessage(to, message) {
+  // Validate inputs
+  if (!to || !message) {
+    throw new Error('Missing required parameters: to, message');
+  }
+  
+  // Ensure message is not empty
+  const cleanMessage = String(message).trim();
+  if (!cleanMessage) {
+    throw new Error('Message cannot be empty');
+  }
+  
   const url = `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_ID}/messages`;
   
   const data = {
@@ -14,7 +25,7 @@ async function sendWhatsAppMessage(to, message) {
     to: to,
     type: 'text',
     text: {
-      body: message
+      body: cleanMessage
     }
   };
 
@@ -23,10 +34,11 @@ async function sendWhatsAppMessage(to, message) {
       headers: {
         'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
         'Content-Type': 'application/json'
-      }
+      },
+      timeout: 10000 // 10 second timeout
     });
     
-    console.log(`📤 WhatsApp Message Sent to ${to}: ${message}`);
+    console.log(`📤 WhatsApp Message Sent to ${to}: ${cleanMessage}`);
     return response.data;
   } catch (error) {
     console.error('❌ WhatsApp Error:', error.response?.data?.error?.message || error.message);
@@ -39,6 +51,11 @@ async function sendWhatsAppMessage(to, message) {
  * @param {string} messageId - Message ID to mark as read
  */
 async function markAsRead(messageId) {
+  // Validate input
+  if (!messageId) {
+    throw new Error('Missing required parameter: messageId');
+  }
+  
   const url = `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_ID}/messages`;
   
   const data = {
@@ -52,10 +69,12 @@ async function markAsRead(messageId) {
       headers: {
         'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
         'Content-Type': 'application/json'
-      }
+      },
+      timeout: 5000 // 5 second timeout
     });
   } catch (error) {
     console.error('Error marking message as read:', error.response?.data || error.message);
+    throw error;
   }
 }
 
