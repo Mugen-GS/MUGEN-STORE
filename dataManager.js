@@ -41,21 +41,27 @@ const createOrUpdateContact = async (phoneNumber, name = null) => {
   try {
     // Normalize phone number for consistent storage
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
+    console.log(`[DEBUG] Creating/updating contact: ${normalizedPhone} (${name || 'no name'})`);
     
     const rows = await getSheetValues('Contacts');
+    console.log(`[DEBUG] Found ${rows.length} rows in Contacts sheet`);
+    
     const contacts = rows.slice(1); // Skip header
     const contactIndex = contacts.findIndex(row => {
       if (!row || row.length === 0) return false;
       // Normalize both phone numbers for comparison
       const storedPhone = normalizePhoneNumber(String(row[0] || ''));
       const searchPhone = normalizePhoneNumber(normalizedPhone);
-      return storedPhone === searchPhone;
+      const match = storedPhone === searchPhone;
+      console.log(`[DEBUG] Comparing '${storedPhone}' === '${searchPhone}' ? ${match}`);
+      return match;
     });
     
     const timestamp = new Date().toISOString();
     
     if (contactIndex !== -1) {
       // Update existing contact
+      console.log(`[INFO] Updating existing contact ${normalizedPhone}`);
       const existingContact = contacts[contactIndex];
       
       // Preserve chat history if it exists, otherwise use empty string
@@ -95,6 +101,7 @@ const createOrUpdateContact = async (phoneNumber, name = null) => {
       };
     } else {
       // Create new contact
+      console.log(`[INFO] Creating new contact ${normalizedPhone}`);
       const newRow = [
         normalizedPhone, // Use normalized phone number
         name || 'Unknown',
@@ -281,6 +288,16 @@ const normalizePhoneNumber = (phone) => {
 const formatTimestamp = (isoString) => {
   const date = new Date(isoString);
   return date.toISOString().replace('T', ' ').substring(0, 16);
+};
+
+module.exports = {
+  getContact,
+  createOrUpdateContact,
+  addMessageToContactHistory,
+  getContactChatHistory,
+  updateContactLeadStatus,
+  generateSessionId
+};return date.toISOString().replace('T', ' ').substring(0, 16);
 };
 
 module.exports = {

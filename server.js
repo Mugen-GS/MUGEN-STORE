@@ -227,21 +227,30 @@ app.get('/api/stats', async (req, res) => {
     
     const memoryCount = Object.values(memory).reduce((sum, cat) => sum + Object.keys(cat).length, 0);
     
-    // Get contact count
+    // Get contact count and calculate total messages
     const contacts = await getSheetValues('Contacts');
     const contactCount = contacts.length > 1 ? contacts.length - 1 : 0; // Subtract header
     
-    // Get message count
-    const messages = await getSheetValues('Messages');
-    const messageCount = messages.length > 1 ? messages.length - 1 : 0; // Subtract header
+    // Calculate total messages from all contacts
+    let totalMessages = 0;
+    if (contacts.length > 1) {
+      // Skip header row and sum message counts
+      for (let i = 1; i < contacts.length; i++) {
+        const contact = contacts[i];
+        if (contact.length > 4) {
+          totalMessages += parseInt(contact[4]) || 0; // Message count is in column 5 (index 4)
+        }
+      }
+    }
     
     res.json({
       trainingExamples: training.length,
       memoryItems: memoryCount,
       totalContacts: contactCount,
-      totalMessages: messageCount
+      totalMessages: totalMessages
     });
   } catch (error) {
+    console.error('[ERROR] Failed to get stats:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
