@@ -353,17 +353,20 @@
 
         <div class="navigation">
             <div class="nav-tabs">
-                <button class="nav-tab active" data-tab="overview">
-                    <i class="fas fa-home"></i> Overview
+                <button class="nav-tab active" onclick="showTab('overview')">
+                    <i class="fas fa-chart-line"></i> Overview
                 </button>
-                <button class="nav-tab" data-tab="business-info">
+                <button class="nav-tab" onclick="showTab('business')">
                     <i class="fas fa-building"></i> Business Info
                 </button>
-                <button class="nav-tab" data-tab="ai-guidelines">
-                    <i class="fas fa-book"></i> AI Guidelines
+                <button class="nav-tab" onclick="showTab('guidelines')">
+                    <i class="fas fa-robot"></i> AI Guidelines
                 </button>
-                <button class="nav-tab" data-tab="ai-testing">
+                <button class="nav-tab" onclick="showTab('testing')">
                     <i class="fas fa-vial"></i> AI Testing
+                </button>
+                <button class="nav-tab" onclick="window.location.href='/live-data.html'">
+                    <i class="fas fa-database"></i> Live Data
                 </button>
             </div>
 
@@ -385,7 +388,7 @@
                 </div>
             </div>
 
-            <div class="tab-content" id="business-info-tab">
+            <div class="tab-content" id="business-tab">
                 <div class="section">
                     <div class="section-header">
                         <h2><i class="fas fa-database"></i> Business Information</h2>
@@ -439,7 +442,7 @@
                 </div>
             </div>
 
-            <div class="tab-content" id="ai-guidelines-tab">
+            <div class="tab-content" id="guidelines-tab">
                 <div class="section">
                     <div class="section-header">
                         <h2><i class="fas fa-book"></i> AI Communication Guidelines</h2>
@@ -496,7 +499,7 @@
                 </div>
             </div>
 
-            <div class="tab-content" id="ai-testing-tab">
+            <div class="tab-content" id="testing-tab">
                 <div class="section">
                     <div class="section-header">
                         <h2><i class="fas fa-vial"></i> AI Testing</h2>
@@ -544,29 +547,26 @@
 
     <script>
         // Tab switching functionality
-        document.querySelectorAll('.nav-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                // Remove active class from all tabs and content
-                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
-                // Add active class to clicked tab
-                tab.classList.add('active');
-                
-                // Show corresponding content
-                const tabId = tab.getAttribute('data-tab');
-                document.getElementById(`${tabId}-tab`).classList.add('active');
-                
-                // Load data for active tab if needed
-                if (tabId === 'business-info') {
-                    loadBusinessInfo();
-                } else if (tabId === 'ai-guidelines') {
-                    loadGuidelines();
-                } else if (tabId === 'ai-testing') {
-                    loadTestHistory();
-                }
-            });
-        });
+        function showTab(tabId) {
+            // Remove active class from all tabs and content
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            document.querySelector(`.nav-tab[onclick="showTab('${tabId}')"]`).classList.add('active');
+            
+            // Show corresponding content
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+            
+            // Load data for active tab if needed
+            if (tabId === 'business') {
+                loadBusinessInfo();
+            } else if (tabId === 'guidelines') {
+                loadGuidelines();
+            } else if (tabId === 'testing') {
+                loadTestHistory();
+            }
+        }
 
         // Load stats on page load
         async function loadStats() {

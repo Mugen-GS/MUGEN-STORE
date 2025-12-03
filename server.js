@@ -173,6 +173,22 @@ app.get('/api/business-info', async (req, res) => {
   }
 });
 
+// API: Get contact information
+app.get('/api/contact-info', async (req, res) => {
+  try {
+    const phone = req.query.phone;
+    if (!phone) {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+
+    const contact = await getContact(phone);
+    res.json(contact || { error: 'Contact not found' });
+  } catch (error) {
+    console.error('[ERROR] Failed to get contact info:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // API: Add AI guideline
 app.post('/api/ai-guidelines', async (req, res) => {
   try {
