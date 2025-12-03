@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { getSheetValues } = require('./sheetsService');
+const { getContactChatHistory } = require('./dataManager');
 
 const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
 
