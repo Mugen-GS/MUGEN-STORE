@@ -102,9 +102,17 @@ async function initializeSheets() {
     const response = await axios.post(
       `${APPS_SCRIPT_URL}?action=initializeHeaders`,
       {},
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-
+      { headers: { 'Content-Type': 'application/json' }
+    });
+    
+    // Also ensure Contacts sheet has the correct headers
+    const contactsHeaders = ['Phone Number', 'Name', 'First Contact', 'Last Contact', 'Total Messages', 'Lead Status', 'Tags', 'Notes', 'Chat History'];
+    const contactsResponse = await axios.post(
+      `${APPS_SCRIPT_URL}?action=ensureHeaders&sheet=Contacts`,
+      { headers: contactsHeaders },
+      { headers: { 'Content-Type': 'application/json' }
+    });
+    
     if (response.data.success) {
       console.log('📊 Google Sheets ready!');
     } else {

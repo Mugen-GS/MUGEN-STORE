@@ -11,12 +11,13 @@ app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 
 // Import services
-const { getGeminiResponse } = require('./geminiService');
+const { getGeminiResponse, detectBuyingIntent, calculateLeadScore } = require('./geminiService');
+const { sendWhatsAppMessage, markAsRead } = require('./whatsappService');
 const { 
   getContact, 
   createOrUpdateContact, 
-  saveMessage, 
-  getContactMessageHistory,
+  addMessageToContactHistory, 
+  getContactChatHistory,
   updateContactLeadStatus,
   generateSessionId
 } = require('./dataManager');
@@ -364,32 +365,3 @@ app.listen(PORT, async () => {
 });
 
 // Helper functions (moved from geminiService for simplicity)
-function detectBuyingIntent(message) {
-  const buyingKeywords = [
-    'price', 'cost', 'how much', 'buy', 'purchase', 'order',
-    'available', 'in stock', 'delivery', 'shipping', 'payment',
-    'pay', 'urgent', 'need it', 'want to buy', 'interested in buying'
-  ];
-  
-  const lowerMessage = message.toLowerCase();
-  return buyingKeywords.some(keyword => lowerMessage.includes(keyword));
-}
-
-function calculateLeadScore(conversationHistory) {
-  let score = 0;
-  
-  // Base score for any contact
-  score += 10;
-  
-  // More messages = more engaged
-  score += Math.min(conversationHistory.length * 5, 30);
-  
-  // Check for buying intent in messages
-  const buyingMessages = conversationHistory.filter(msg => 
-    detectBuyingIntent(msg.message) && msg.role === 'user'
-  );
-  score += buyingMessages.length * 20;
-  
-  // Cap at 100
-  return Math.min(score, 100);
-}

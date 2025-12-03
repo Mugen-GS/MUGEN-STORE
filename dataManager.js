@@ -44,7 +44,7 @@ const getContact = async (phoneNumber) => {
       leadStatus: contactRow[5],
       tags: contactRow[6] || '',
       notes: contactRow[7] || '',
-      chatHistory: contactRow[8] || '' // Chat history is now in column 9 (index 8)
+      chatHistory: contactRow[8] || '' // Chat history is now in column 9 (index 8), default to empty string if not present
     };
   } catch (error) {
     console.error('Error getting contact:', error.message);
@@ -88,7 +88,7 @@ const createOrUpdateContact = async (phoneNumber, name = null) => {
       console.log(`🔄 Updating existing contact: ${normalizedPhone}`);
       const existingContact = contacts[contactIndex];
       
-      // Preserve chat history and append new message
+      // Preserve chat history if it exists, otherwise use empty string
       const chatHistory = existingContact[8] || '';
       
       const updatedRow = [
@@ -100,8 +100,13 @@ const createOrUpdateContact = async (phoneNumber, name = null) => {
         existingContact[5], // Preserve lead status
         existingContact[6] || '', // Preserve tags
         existingContact[7] || '', // Preserve notes
-        chatHistory // Preserve chat history
+        chatHistory // Preserve chat history (column 9)
       ];
+      
+      // Ensure the row has exactly 9 elements (in case the sheet was created before we added chat history)
+      while (updatedRow.length < 9) {
+        updatedRow.push('');
+      }
       
       await updateSheetValues('Contacts', contactIndex + 2, updatedRow); // +2 because: 1 for header, 1 for 1-based index
       
@@ -128,7 +133,7 @@ const createOrUpdateContact = async (phoneNumber, name = null) => {
         'browsing', // Lead status
         '', // Tags
         '', // Notes
-        '' // Empty chat history initially
+        '' // Empty chat history initially (column 9)
       ];
       
       await appendSheetValues('Contacts', newRow);
@@ -172,6 +177,11 @@ const addMessageToContactHistory = async (phoneNumber, userMessage, aiResponse) 
     if (contactIndex !== -1) {
       const existingContact = [...contacts[contactIndex]]; // Create a copy
       const timestamp = new Date().toISOString();
+      
+      // Ensure the contact row has enough columns
+      while (existingContact.length < 9) {
+        existingContact.push('');
+      }
       
       // Format messages for chat history
       let chatHistory = existingContact[8] || ''; // Chat history is in column 9 (index 8)
