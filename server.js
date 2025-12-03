@@ -300,32 +300,25 @@ app.post('/api/teach', async (req, res) => {
   }
 });
 
-// API: Test chat with AI
+// API: Test the AI with TrainingChats personality
 app.post('/api/test-chat', async (req, res) => {
   try {
-    const { message, phone } = req.body;
+    const { message, phone = '+1234567890' } = req.body;
     console.log(`\n=== 🧪 TESTING AI ===`);
     console.log(`Phone: ${phone}`);
     console.log(`Message: ${message}`);
     
+    // Get or create contact
+    let contact = await getContact(phone);
+    if (!contact) {
+      contact = await createOrUpdateContact(phone);
+    }
+    
     // Get AI response with full context (same as WhatsApp)
     const aiResponse = await getGeminiResponse(message, [], phone);
     
-    // Save conversation
-    const sessionId = generateSessionId(phone);
-    await saveMessage({
-      phoneNumber: phone,
-      role: 'user',
-      message: message,
-      sessionId: sessionId
-    });
-    
-    await saveMessage({
-      phoneNumber: phone,
-      role: 'assistant',
-      message: aiResponse,
-      sessionId: sessionId
-    });
+    // Add messages to contact's chat history
+    await addMessageToContactHistory(phone, message, aiResponse);
     
     console.log(`AI Response: ${aiResponse}`);
     console.log('==================\n');
@@ -342,7 +335,7 @@ app.get('/api/test-history', async (req, res) => {
   try {
     const phone = req.query.phone;
     console.log(`🔍 Loading history for phone: ${phone}`);
-    const history = await getContactMessageHistory(phone, 20);
+    const history = await getContactChatHistory(phone, 20);
     console.log(`📊 Found ${history.length} history items`);
     res.json({ history });
   } catch (error) {
