@@ -4,7 +4,7 @@ const { getSheetValues } = require('./sheetsService');
 const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
 
 /**
- * Get training conversations from "TrainingChats" sheet
+ * Get training conversations from "TrainingChats" sheet (deprecated but kept for backward compatibility)
  * Returns examples of how MUGEN communicates
  * Format: DateTime | Sender | Message
  */
@@ -120,36 +120,46 @@ async function addMemory(category, key, value, notes = '') {
 }
 
 /**
- * Get customer conversation history from "Conversations" sheet
+ * Get customer conversation history from "Messages" sheet
  * for maintaining context with returning customers
  */
 async function getCustomerHistory(phoneNumber, limit = 10) {
   try {
     console.log(`🔍 Loading customer history for: ${phoneNumber}`);
-    const rows = await getSheetValues('Conversations');
-    const conversations = rows.slice(1); // Skip header
+    const rows = await getSheetValues('Messages');
+    const messages = rows.slice(1); // Skip header
     
-    console.log(`📋 Total conversation rows received: ${conversations.length}`);
+    console.log(`📋 Total message rows received: ${messages.length}`);
     
-    // Filter for this customer's conversations
-    const customerMessages = conversations
+    // Filter for this customer's messages where role is 'user' or 'assistant'
+    const customerMessages = messages
       .filter(row => {
-        if (!row || row.length < 4) {
+        if (!row || row.length < 5) {
           console.log(`  ❌ Skipping invalid row:`, row);
           return false;
         }
         // Handle type differences - convert both to strings for comparison
-        const storedPhone = String(row[0]);
+        const storedPhone = String(row[1]); // Phone number is in column 2 (index 1)
         const searchPhone = String(phoneNumber);
         const match = storedPhone === searchPhone;
-        console.log(`  🔍 Filtering conversation row: '${storedPhone}' === '${searchPhone}' ? ${match}`);
-        return match;
+        console.log(`  🔍 Filtering message row: '${storedPhone}' === '${searchPhone}' ? ${match}`);
+        return match && (row[3] === 'user' || row[3] === 'assistant'); // Role is in column 4 (index 3)
       })
       .map(row => ({
-        timestamp: row[1],
-        userMessage: row[2],
-        aiResponse: row[3]
+        timestamp: row[2],
+        userMessage: row[3] === 'user' ? row[4] : '',
+        aiResponse: row[3] === 'assistant' ? row[4] : ''
       }))
+      .reduce((acc, curr) => {
+        // Group user and assistant messages together
+        if (curr.userMessage) {
+          acc.push({ timestamp: curr.timestamp, userMessage: curr.userMessage, aiResponse: '' });
+        } else if (curr.aiResponse && acc.length > 0) {
+          // Add AI response to the last user message
+          acc[acc.length - 1].aiResponse = curr.aiResponse;
+        }
+        return acc;
+      }, [])
       .slice(-limit); // Get last N conversations
     
     console.log(`📚 Loaded ${customerMessages.length} previous messages for ${phoneNumber}`);

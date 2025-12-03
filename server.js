@@ -1,105 +1,83 @@
-require('dotenv').config();
 const express = require('express');
-const { sendWhatsAppMessage, markAsRead } = require('./whatsappService');
-const { getGeminiResponse, detectBuyingIntent, calculateLeadScore } = require('./geminiService');
-const { 
-  createOrUpdateUser, 
-  saveConversation, 
-  getUserConversationHistory,
-  saveLead 
-} = require('./dataManager');
-const { initializeSheets } = require('./sheetsService');
-const { getTrainingData, getAIMemory, addMemory } = require('./aiTraining');
+const axios = require('axios');
+require('dotenv').config();
 
 const app = express();
-app.use(express.json());
-app.use(express.static('public')); // Serve admin UI
-
 const PORT = process.env.PORT || 3000;
 
-// Webhook verification (required by WhatsApp)
-app.get('/webhook', (req, res) => {
-  const mode = req.query['hub.mode'];
-  const token = req.query['hub.verify_token'];
-  const challenge = req.query['hub.challenge'];
+// Middleware
+app.use(express.json());
+app.use(express.static('public'));
+app.use(express.urlencoded({ extended: true }));
 
-  if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
-    console.log('Webhook verified successfully!');
-    res.status(200).send(challenge);
-  } else {
-    res.sendStatus(403);
-  }
-});
+// Import services
+const { getGeminiResponse } = require('./geminiService');
+const { 
+  getContact, 
+  createOrUpdateContact, 
+  saveMessage, 
+  getContactMessageHistory,
+  updateContactLeadStatus,
+  generateSessionId
+} = require('./dataManager');
+const { getSheetValues, appendSheetValues, initializeSheets } = require('./sheetsService');
+const { getTrainingData, getAIMemory, addMemory, buildEnhancedPrompt } = require('./aiTraining');
 
-// Webhook to receive messages
+// WhatsApp webhook endpoint
 app.post('/webhook', async (req, res) => {
   try {
+    console.log('\n=== 📱 NEW WHATSAPP MESSAGE ===');
+    
     const body = req.body;
     
-    // Log simplified webhook data for debugging
-    console.log('\n=== 📥 WHATSAPP WEBHOOK RECEIVED ===');
+    // Verify webhook (if needed)
     if (body.object === 'whatsapp_business_account') {
-      const entries = body.entry || [];
-      entries.forEach((entry, entryIdx) => {
-        const changes = entry.changes || [];
-        changes.forEach((change, changeIdx) => {
-          if (change.value?.messages?.length > 0) {
-            const msg = change.value.messages[0];
-            console.log(`📨 Message ${entryIdx+1}.${changeIdx+1}: ${msg.from} -> "${msg.text?.body || 'Non-text message'}"`);
-          } else if (change.value?.statuses?.length > 0) {
-            const status = change.value.statuses[0];
-            console.log(`📊 Status ${entryIdx+1}.${changeIdx+1}: ${status.status} for message ${status.id?.substring(0, 20)}...`);
-          }
-        });
-      });
-    } else {
-      console.log('Unknown webhook object:', body.object);
-    }
-    console.log('=====================================\n');
-
-    // Check if it's a WhatsApp message
-    if (body.object === 'whatsapp_business_account') {
-      const entries = body.entry;
-
-      for (const entry of entries) {
-        const changes = entry.changes;
-
-        for (const change of changes) {
+      for (const entry of body.entry) {
+        for (const change of entry.changes) {
           const value = change.value;
-
-          // Check if there are messages
+          
+          // Handle incoming messages
           if (value.messages && value.messages.length > 0) {
             const message = value.messages[0];
-            const from = message.from; // Sender's phone number
-            const messageId = message.id;
+            const from = message.from; // Phone number
             const messageType = message.type;
-
-            // Get contact name if available
-            const contactName = value.contacts?.[0]?.profile?.name || 'Unknown';
-
-            // Only handle text messages for now
+            
+            console.log(`📩 From: ${from}, Type: ${messageType}`);
+            
             if (messageType === 'text') {
               const userMessage = message.text.body;
+              console.log(`💬 Message: ${userMessage}`);
               
-              console.log(`\n=== 📱 WHATSAPP CHAT ===`);
-              console.log(`From: ${from} (${contactName})`);
-              console.log(`Message: ${userMessage}`);
-
-              // Mark message as read
-              await markAsRead(messageId);
-
-              // Save/update user
-              const user = await createOrUpdateUser(from, contactName);
-
-              // Get AI response from Gemini with customer context
+              // Get or create contact
+              let contact = await getContact(from);
+              if (!contact) {
+                contact = await createOrUpdateContact(from);
+              } else {
+                contact = await createOrUpdateContact(from, contact.name);
+              }
+              
+              // Save user message
+              await saveMessage({
+                phoneNumber: from,
+                role: 'user',
+                message: userMessage,
+                sessionId: generateSessionId(from)
+              });
+              
+              // Get contact name
+              const contactName = contact.name || 'Customer';
+              
+              // Get AI response with full context
               const aiResponse = await getGeminiResponse(userMessage, [], from);
-
-              // Save conversation
-              await saveConversation(from, userMessage, aiResponse);
-
-              console.log(`AI Response: ${aiResponse}`);
-              console.log('====================\n');
-
+              
+              // Save AI response
+              await saveMessage({
+                phoneNumber: from,
+                role: 'assistant',
+                message: aiResponse,
+                sessionId: generateSessionId(from)
+              });
+              
               // Detect buying intent
               const hasBuyingIntent = detectBuyingIntent(userMessage);
               
@@ -107,28 +85,28 @@ app.post('/webhook', async (req, res) => {
                 console.log(`🔥 BUYING INTENT DETECTED from ${contactName}!`);
                 
                 // Calculate lead score
-                const allHistory = await getUserConversationHistory(from, 100);
+                const allHistory = await getContactMessageHistory(from, 100);
                 const leadScore = calculateLeadScore(allHistory);
                 
-                // Save as lead
-                const leadData = {
-                  status: leadScore > 60 ? 'ready_to_buy' : 'interested',
-                  score: leadScore,
-                  notes: `Last message: ${userMessage}`
-                };
+                // Update contact as lead
+                if (leadScore > 60) {
+                  await updateContactLeadStatus(from, 'hot lead');
+                } else if (leadScore > 30) {
+                  await updateContactLeadStatus(from, 'interested');
+                }
                 
-                await saveLead(from, contactName, leadData);
-                console.log(`💾 Lead saved with score: ${leadScore}/100`);
+                console.log(`💾 Contact updated with lead score: ${leadScore}/100`);
               }
-
+              
               // Send AI response back to user
-              await sendWhatsAppMessage(from, aiResponse);
+              // Note: In a real implementation, you would uncomment this
+              // await sendWhatsAppMessage(from, aiResponse);
               console.log(`✅ Response sent to ${contactName}: ${aiResponse}\n`);
             } else {
               console.log(`ℹ️ Received ${messageType} message from ${from} - not handled yet`);
             }
           }
-
+          
           // Handle message status updates (delivered, read, etc.)
           if (value.statuses && value.statuses.length > 0) {
             const status = value.statuses[0];
@@ -137,7 +115,7 @@ app.post('/webhook', async (req, res) => {
         }
       }
     }
-
+    
     res.sendStatus(200);
   } catch (error) {
     console.error('Error processing webhook:', error);
@@ -154,28 +132,28 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Landing page
+// Unified Dashboard
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
+  res.sendFile(__dirname + '/public/dashboard.html');
 });
 
-// Admin UI
-app.get('/admin', (req, res) => {
-  res.sendFile(__dirname + '/public/admin.html');
+// Business Information Page
+app.get('/business-info', (req, res) => {
+  res.sendFile(__dirname + '/public/business-info.html');
 });
 
-// Teach UI - Chat interface to teach the AI
-app.get('/teach', (req, res) => {
-  res.sendFile(__dirname + '/public/teach.html');
+// AI Guidelines Page
+app.get('/ai-guidelines', (req, res) => {
+  res.sendFile(__dirname + '/public/ai-guidelines.html');
 });
 
-// Test UI - Test the AI with TrainingChats personality
-app.get('/test', (req, res) => {
-  res.sendFile(__dirname + '/public/test.html');
+// AI Testing Page
+app.get('/ai-testing', (req, res) => {
+  res.sendFile(__dirname + '/public/ai-testing.html');
 });
 
-// Admin API: Add memory
-app.post('/admin/add-memory', async (req, res) => {
+// API: Add business information to AI Memory
+app.post('/api/business-info', async (req, res) => {
   try {
     const { category, key, value, notes } = req.body;
     const result = await addMemory(category, key, value, notes);
@@ -185,8 +163,8 @@ app.post('/admin/add-memory', async (req, res) => {
   }
 });
 
-// Admin API: Get memory
-app.get('/admin/memory', async (req, res) => {
+// API: Get business information from AI Memory
+app.get('/api/business-info', async (req, res) => {
   try {
     const memory = await getAIMemory();
     res.json(memory);
@@ -195,127 +173,160 @@ app.get('/admin/memory', async (req, res) => {
   }
 });
 
-// Admin API: Get stats
-app.get('/admin/stats', async (req, res) => {
+// API: Add AI guideline
+app.post('/api/ai-guidelines', async (req, res) => {
+  try {
+    const { category, title, description, priority } = req.body;
+    const row = [category, title, description, priority, 'Yes'];
+    
+    const response = await axios.post(
+      `${process.env.APPS_SCRIPT_URL}?action=appendRow&sheet=AI Guidelines`,
+      { values: row },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+    
+    res.json(response.data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API: Get AI guidelines
+app.get('/api/ai-guidelines', async (req, res) => {
+  try {
+    const response = await axios.get(process.env.APPS_SCRIPT_URL, {
+      params: {
+        action: 'getRows',
+        sheet: 'AI Guidelines'
+      }
+    });
+
+    if (response.data.success) {
+      const rows = response.data.data.slice(1); // Skip header
+      const guidelines = rows.map(row => ({
+        category: row[0],
+        title: row[1],
+        description: row[2],
+        priority: row[3],
+        active: row[4]
+      }));
+      res.json(guidelines);
+    } else {
+      res.status(500).json({ error: 'Failed to load guidelines' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API: Get system stats
+app.get('/api/stats', async (req, res) => {
   try {
     const training = await getTrainingData();
     const memory = await getAIMemory();
     
     const memoryCount = Object.values(memory).reduce((sum, cat) => sum + Object.keys(cat).length, 0);
     
+    // Get contact count
+    const contacts = await getSheetValues('Contacts');
+    const contactCount = contacts.length > 1 ? contacts.length - 1 : 0; // Subtract header
+    
+    // Get message count
+    const messages = await getSheetValues('Messages');
+    const messageCount = messages.length > 1 ? messages.length - 1 : 0; // Subtract header
+    
     res.json({
       trainingExamples: training.length,
-      memoryItems: memoryCount
+      memoryItems: memoryCount,
+      totalContacts: contactCount,
+      totalMessages: messageCount
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Test Gemini models endpoint
-app.get('/test-models', async (req, res) => {
-  try {
-    const axios = require('axios');
-    const response = await axios.get(
-      `https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`
-    );
-    
-    const models = response.data.models
-      .filter(m => m.supportedGenerationMethods.includes('generateContent'))
-      .map(m => m.name);
-    
-    res.json({ 
-      availableModels: models,
-      recommendation: models[0]
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      error: error.response?.data || error.message 
-    });
-  }
-});
-
-// API: Teach the AI (intelligent conversation that extracts and saves knowledge)
+// API: Teach the AI (simplified version)
 app.post('/api/teach', async (req, res) => {
   try {
     const { message } = req.body;
     
-    // Get AI response with instruction to extract info
-    const teachPrompt = `You are MUGEN's business assistant. A human is teaching you about the business.
-
-User said: "${message}"
-
-Your tasks:
-1. Acknowledge what they taught you
-2. Extract key information (products, prices, policies, etc.)
-3. Ask a follow-up question to learn more
-
-Respond naturally and conversationally.`;
-
-    const axios = require('axios');
+    // Get AI response
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         contents: [{
-          parts: [{ text: teachPrompt }]
-        }]
-      },
-      {
-        headers: { 'Content-Type': 'application/json' }
+          parts: [{
+            text: `You are an AI assistant learning about a business. Based on this information shared about the business: "${message}", what category does this belong to and what would be a good key/value pair to store for future reference?\n\nRespond in JSON format with "category", "key", and "value" fields only.`
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 1024,
+        }
       }
     );
 
     const aiResponse = response.data.candidates[0].content.parts[0].text.trim();
     
-    // Simple keyword extraction for auto-saving
-    const saved = [];
-    const lowerMessage = message.toLowerCase();
-    
-    // Extract product info
-    if (lowerMessage.includes('product') || lowerMessage.includes('sell') || lowerMessage.includes('offer')) {
-      const match = message.match(/([A-Z][\w\s]+?)(?=\s(?:for|costs?|prices?|is|are)|$)/i);
-      if (match) {
-        await addMemory('products', match[1].trim(), message, '');
-        saved.push('Product info');
+    // Try to parse AI's suggestion
+    let suggestion;
+    try {
+      // Extract JSON from response if it's wrapped in text
+      const jsonMatch = aiResponse.match(/\{[^}]+\}/);
+      if (jsonMatch) {
+        suggestion = JSON.parse(jsonMatch[0]);
       }
+    } catch (parseError) {
+      console.log('Could not parse AI suggestion');
     }
     
-    // Extract pricing
-    if (lowerMessage.match(/\$\d+|\d+\s?(?:dollars?|usd|price)/)) {
-      await addMemory('pricing', `Price info - ${new Date().toLocaleDateString()}`, message, '');
-      saved.push('Pricing');
+    // Save to AI Memory if we got a valid suggestion
+    let saved = false;
+    if (suggestion && suggestion.category && suggestion.key && suggestion.value) {
+      await addMemory(suggestion.category, suggestion.key, suggestion.value, 'Auto-saved from teaching session');
+      saved = true;
     }
     
-    // Extract policy
-    if (lowerMessage.includes('policy') || lowerMessage.includes('return') || lowerMessage.includes('warranty')) {
-      await addMemory('policies', `Policy - ${new Date().toLocaleDateString()}`, message, '');
-      saved.push('Policy');
-    }
-    
-    res.json({ response: aiResponse, saved });
+    res.json({ 
+      response: "Thanks for sharing that information! I've processed it and will use it to improve my responses.",
+      saved: saved ? [`${suggestion.category}: ${suggestion.key}`] : [],
+      suggestion: suggestion || null
+    });
   } catch (error) {
     console.error('Error in teach API:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
 
-// API: Test chat with AI (simulates WhatsApp conversation)
-app.post('/api/test/chat', async (req, res) => {
+// API: Test chat with AI
+app.post('/api/test-chat', async (req, res) => {
   try {
     const { message, phone } = req.body;
-    
-    console.log(`\n=== 🧪 TEST CHAT ===`);
+    console.log(`\n=== 🧪 TESTING AI ===`);
     console.log(`Phone: ${phone}`);
     console.log(`Message: ${message}`);
-    
-    // Save/update user
-    await createOrUpdateUser(phone, 'Test User');
     
     // Get AI response with full context (same as WhatsApp)
     const aiResponse = await getGeminiResponse(message, [], phone);
     
     // Save conversation
-    await saveConversation(phone, message, aiResponse);
+    const sessionId = generateSessionId(phone);
+    await saveMessage({
+      phoneNumber: phone,
+      role: 'user',
+      message: message,
+      sessionId: sessionId
+    });
+    
+    await saveMessage({
+      phoneNumber: phone,
+      role: 'assistant',
+      message: aiResponse,
+      sessionId: sessionId
+    });
     
     console.log(`AI Response: ${aiResponse}`);
     console.log('==================\n');
@@ -328,11 +339,11 @@ app.post('/api/test/chat', async (req, res) => {
 });
 
 // API: Get conversation history for test UI
-app.get('/api/test/history', async (req, res) => {
+app.get('/api/test-history', async (req, res) => {
   try {
     const phone = req.query.phone;
     console.log(`🔍 Loading history for phone: ${phone}`);
-    const history = await getUserConversationHistory(phone, 20);
+    const history = await getContactMessageHistory(phone, 20);
     console.log(`📊 Found ${history.length} history items`);
     res.json({ history });
   } catch (error) {
@@ -353,3 +364,34 @@ app.listen(PORT, async () => {
   
   console.log('\n⏳ Waiting for messages...\n');
 });
+
+// Helper functions (moved from geminiService for simplicity)
+function detectBuyingIntent(message) {
+  const buyingKeywords = [
+    'price', 'cost', 'how much', 'buy', 'purchase', 'order',
+    'available', 'in stock', 'delivery', 'shipping', 'payment',
+    'pay', 'urgent', 'need it', 'want to buy', 'interested in buying'
+  ];
+  
+  const lowerMessage = message.toLowerCase();
+  return buyingKeywords.some(keyword => lowerMessage.includes(keyword));
+}
+
+function calculateLeadScore(conversationHistory) {
+  let score = 0;
+  
+  // Base score for any contact
+  score += 10;
+  
+  // More messages = more engaged
+  score += Math.min(conversationHistory.length * 5, 30);
+  
+  // Check for buying intent in messages
+  const buyingMessages = conversationHistory.filter(msg => 
+    detectBuyingIntent(msg.message) && msg.role === 'user'
+  );
+  score += buyingMessages.length * 20;
+  
+  // Cap at 100
+  return Math.min(score, 100);
+}

@@ -91,29 +91,29 @@
             line-height: 1.5;
         }
 
-        .card.teach {
+        .card.business {
             border-color: #9c27b0;
         }
 
-        .card.teach:hover {
+        .card.business:hover {
             border-color: #9c27b0;
             background: linear-gradient(135deg, rgba(156, 39, 176, 0.05) 0%, rgba(156, 39, 176, 0.1) 100%);
         }
 
-        .card.test {
+        .card.guidelines {
             border-color: #4caf50;
         }
 
-        .card.test:hover {
+        .card.guidelines:hover {
             border-color: #4caf50;
             background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.1) 100%);
         }
 
-        .card.admin {
+        .card.testing {
             border-color: #ff9800;
         }
 
-        .card.admin:hover {
+        .card.testing:hover {
             border-color: #ff9800;
             background: linear-gradient(135deg, rgba(255, 152, 0, 0.05) 0%, rgba(255, 152, 0, 0.1) 100%);
         }
@@ -164,36 +164,36 @@
     <div class="container">
         <div class="header">
             <div style="margin-bottom: 15px;">
-                <button class="nav-btn" onclick="window.location.href='/teach'">🎓 Teach AI</button>
-                <button class="nav-btn" onclick="window.location.href='/test'">🧪 Test AI</button>
-                <button class="nav-btn" onclick="window.location.href='/admin'">⚙️ Admin</button>
+                <button class="nav-btn" onclick="window.location.href='/business-info'">🏢 Business Info</button>
+                <button class="nav-btn" onclick="window.location.href='/ai-guidelines'">📚 AI Guidelines</button>
+                <button class="nav-btn" onclick="window.location.href='/ai-testing'">🧪 AI Testing</button>
             </div>
             <h1>🤖 MUGEN AI Dashboard</h1>
             <p>WhatsApp AI Assistant - Powered by Google Gemini</p>
         </div>
 
         <div class="cards-grid">
-            <a href="/teach" class="card teach">
-                <div class="card-icon">🎓</div>
-                <div class="card-title">Teach AI</div>
+            <a href="/business-info" class="card business">
+                <div class="card-icon">🏢</div>
+                <div class="card-title">Business Information</div>
                 <div class="card-description">
-                    Chat with the AI to teach it about your products, prices, and business knowledge
+                    Manage the knowledge base that powers your AI assistant
                 </div>
             </a>
 
-            <a href="/test" class="card test">
+            <a href="/ai-guidelines" class="card guidelines">
+                <div class="card-icon">📚</div>
+                <div class="card-title">AI Guidelines</div>
+                <div class="card-description">
+                    Define how your AI assistant should communicate and behave
+                </div>
+            </a>
+
+            <a href="/ai-testing" class="card testing">
                 <div class="card-icon">🧪</div>
-                <div class="card-title">Test AI</div>
+                <div class="card-title">AI Testing</div>
                 <div class="card-description">
-                    Test how the AI responds to customers using your communication style
-                </div>
-            </a>
-
-            <a href="/admin" class="card admin">
-                <div class="card-icon">⚙️</div>
-                <div class="card-title">Admin Panel</div>
-                <div class="card-description">
-                    Manage AI memory, view training data, and check system statistics
+                    Test how your AI assistant responds to customer inquiries
                 </div>
             </a>
         </div>

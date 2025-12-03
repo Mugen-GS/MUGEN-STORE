@@ -106,38 +106,107 @@ function updateRow(sheetName, rowIndex, values) {
   ).setMimeType(ContentService.MimeType.JSON);
 }
 
-// Initialize sheet headers
+// Initialize sheet headers according to CRM optimization checklist
 function initializeHeaders() {
   const ss = getSpreadsheet();
   
-  // Users sheet
-  let sheet = ss.getSheetByName('Users');
+  // Contacts sheet - one row per phone number
+  let sheet = ss.getSheetByName('Contacts');
   if (!sheet) {
-    sheet = ss.insertSheet('Users');
+    sheet = ss.insertSheet('Contacts');
   }
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Phone Number', 'Name', 'First Contact', 'Last Contact', 'Message Count', 'Lead Status', 'Notes']);
+    // Add headers with dropdown fields for consistent data entry
+    sheet.appendRow(['Phone Number', 'Name', 'First Contact', 'Last Contact', 'Total Messages', 'Lead Status', 'Tags', 'Notes']);
+    
+    // Add dropdown for Lead Status
+    const leadStatusCell = sheet.getRange(1, 6); // Column F (6)
+    const leadStatusRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['browsing', 'hot lead', 'cold lead', 'customer', 'unqualified'])
+      .build();
+    leadStatusCell.setDataValidation(leadStatusRule);
+    
+    // Add dropdown for Notes categories
+    const notesCategoriesCell = sheet.getRange(1, 8); // Column H (8)
+    const notesCategoriesRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['follow-up needed', 'interested', 'not interested', 'pricing inquiry', 'technical question', 'general inquiry'])
+      .build();
+    notesCategoriesCell.setDataValidation(notesCategoriesRule);
   }
   
-  // Conversations sheet
-  sheet = ss.getSheetByName('Conversations');
+  // Messages sheet - all chat logs with structured format
+  sheet = ss.getSheetByName('Messages');
   if (!sheet) {
-    sheet = ss.insertSheet('Conversations');
+    sheet = ss.insertSheet('Messages');
   }
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Phone Number', 'Timestamp', 'User Message', 'AI Response']);
+    sheet.appendRow(['MessageID', 'Phone Number', 'Timestamp', 'Role', 'Message', 'SessionID', 'MessageType', 'Sentiment', 'Intent']);
+    
+    // Add dropdown for Role
+    const roleCell = sheet.getRange(1, 4); // Column D (4)
+    const roleRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['user', 'assistant'])
+      .build();
+    roleCell.setDataValidation(roleRule);
+    
+    // Add dropdown for MessageType
+    const messageTypeCell = sheet.getRange(1, 7); // Column G (7)
+    const messageTypeRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['greeting', 'question', 'request', 'response', 'closing', 'other'])
+      .build();
+    messageTypeCell.setDataValidation(messageTypeRule);
+    
+    // Add dropdown for Sentiment
+    const sentimentCell = sheet.getRange(1, 8); // Column H (8)
+    const sentimentRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['positive', 'neutral', 'negative'])
+      .build();
+    sentimentCell.setDataValidation(sentimentRule);
+    
+    // Add dropdown for Intent
+    const intentCell = sheet.getRange(1, 9); // Column I (9)
+    const intentRule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['pricing', 'support', 'browsing', 'purchase', 'other'])
+      .build();
+    intentCell.setDataValidation(intentRule);
   }
   
-  // Leads sheet
-  sheet = ss.getSheetByName('Leads');
+  // AI Memory sheet - business information and guidelines
+  sheet = ss.getSheetByName('AI Memory');
   if (!sheet) {
-    sheet = ss.insertSheet('Leads');
+    sheet = ss.insertSheet('AI Memory');
   }
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Phone Number', 'Name', 'Timestamp', 'Status', 'Score', 'Interests', 'Budget', 'Notes']);
+    sheet.appendRow(['Category', 'Key', 'Value', 'Notes', 'Timestamp']);
+  }
+  
+  // AI Guidelines sheet - instructions on how the AI should chat and interact
+  sheet = ss.getSheetByName('AI Guidelines');
+  if (!sheet) {
+    sheet = ss.insertSheet('AI Guidelines');
+  }
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['Guideline Category', 'Title', 'Description', 'Priority', 'Active']);
+    
+    // Add sample guidelines
+    sheet.appendRow(['Communication Style', 'Be Friendly', 'Always maintain a friendly and approachable tone', 'High', 'Yes']);
+    sheet.appendRow(['Response Length', 'Keep it Short', 'Responses should be concise, ideally 1-2 sentences', 'High', 'Yes']);
+    sheet.appendRow(['Product Knowledge', 'Use Available Info', 'Only provide information that exists in the AI Memory', 'High', 'Yes']);
+  }
+  
+  // Dashboard Summary sheet - for charts and summaries
+  sheet = ss.getSheetByName('Dashboard');
+  if (!sheet) {
+    sheet = ss.insertSheet('Dashboard');
+  }
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['Metric', 'Value', 'Last Updated']);
+    sheet.appendRow(['Total Customers', 0, new Date()]);
+    sheet.appendRow(['Total Messages', 0, new Date()]);
+    sheet.appendRow(['Hot Leads', 0, new Date()]);
   }
   
   return ContentService.createTextOutput(
-    JSON.stringify({ success: true, message: 'Headers initialized' })
+    JSON.stringify({ success: true, message: 'Headers initialized with CRM optimization' })
   ).setMimeType(ContentService.MimeType.JSON);
 }

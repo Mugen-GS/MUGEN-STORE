@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MUGEN AI Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #11998e;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .stat-card.primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, var(--success) 0%, #20c997 100%);
+            color: white;
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, var(--warning) 0%, #ffb22b 100%);
+            color: white;
+        }
+
+        .stat-card.danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #e83e8c 100%);
+            color: white;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .navigation {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .nav-tab {
+            padding: 12px 24px;
+            background: var(--light-gray);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tab:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            color: var(--dark);
+            font-size: 1.5rem;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--light-gray);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .memory-item {
+            background: var(--light);
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .memory-category {
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .memory-key {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+
+        .memory-value {
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: var(--success);
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-robot"></i> MUGEN AI Dashboard</h1>
+            <p>WhatsApp AI Assistant - Powered by Google Gemini</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <div class="stat-value" id="contactCount">--</div>
+                <div class="stat-label">Total Contacts</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-value" id="messageCount">--</div>
+                <div class="stat-label">Total Messages</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-value" id="memoryCount">--</div>
+                <div class="stat-label">Memory Items</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="stat-value" id="trainingCount">--</div>
+                <div class="stat-label">Training Examples</div>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-tab="overview">
+                    <i class="fas fa-home"></i> Overview
+                </button>
+                <button class="nav-tab" data-tab="business-info">
+                    <i class="fas fa-building"></i> Business Info
+                </button>
+                <button class="nav-tab" data-tab="ai-guidelines">
+                    <i class="fas fa-book"></i> AI Guidelines
+                </button>
+                <button class="nav-tab" data-tab="ai-testing">
+                    <i class="fas fa-vial"></i> AI Testing
+                </button>
+            </div>
+
+            <div class="tab-content active" id="overview-tab">
+                <div class="section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-chart-line"></i> System Overview</h2>
+                    </div>
+                    <p>Welcome to your MUGEN AI Dashboard. Here you can manage your AI assistant, view statistics, and configure how your AI interacts with customers.</p>
+                    
+                    <div style="margin-top: 20px; padding: 20px; background: var(--light); border-radius: 8px;">
+                        <h3><i class="fas fa-lightbulb"></i> Quick Tips</h3>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li style="margin-bottom: 8px;">Add business information in the "Business Info" section for the AI to reference</li>
+                            <li style="margin-bottom: 8px;">Define AI guidelines to control how your assistant communicates</li>
+                            <li style="margin-bottom: 8px;">Test your AI regularly to ensure it's performing as expected</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="business-info-tab">
+                <div class="section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-database"></i> Business Information</h2>
+                        <button class="btn btn-primary" onclick="document.getElementById('add-business-form').style.display='block'">
+                            <i class="fas fa-plus"></i> Add New Information
+                        </button>
+                    </div>
+                    
+                    <div id="add-business-form" style="display: none; margin-bottom: 30px; padding: 20px; background: var(--light); border-radius: 8px;">
+                        <h3><i class="fas fa-plus-circle"></i> Add Business Information</h3>
+                        <div class="form-group">
+                            <label for="category">Category</label>
+                            <select class="form-control" id="category">
+                                <option value="products">Products</option>
+                                <option value="pricing">Pricing</option>
+                                <option value="shipping">Shipping/Delivery</option>
+                                <option value="faq">FAQ</option>
+                                <option value="policies">Policies</option>
+                                <option value="general">General Info</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="key">Topic/Question</label>
+                            <input type="text" class="form-control" id="key" placeholder="e.g., 'RTX 4060 price' or 'delivery time'">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="value">Answer/Information</label>
+                            <textarea class="form-control" id="value" placeholder="e.g., '₦450,000' or '2-3 days in Lagos, 5-7 days nationwide'"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="notes">Notes (optional)</label>
+                            <input type="text" class="form-control" id="notes" placeholder="Internal notes...">
+                        </div>
+                        
+                        <button class="btn btn-success" onclick="addBusinessInfo()">
+                            <i class="fas fa-save"></i> Save Information
+                        </button>
+                        <button class="btn" onclick="document.getElementById('add-business-form').style.display='none'" style="background: var(--gray); color: white;">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                    
+                    <div id="business-memory-display">
+                        <p style="text-align: center; color: var(--gray); padding: 40px;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading business information...
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="ai-guidelines-tab">
+                <div class="section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-book"></i> AI Communication Guidelines</h2>
+                        <button class="btn btn-primary" onclick="document.getElementById('add-guideline-form').style.display='block'">
+                            <i class="fas fa-plus"></i> Add Guideline
+                        </button>
+                    </div>
+                    
+                    <div id="add-guideline-form" style="display: none; margin-bottom: 30px; padding: 20px; background: var(--light); border-radius: 8px;">
+                        <h3><i class="fas fa-plus-circle"></i> Add AI Guideline</h3>
+                        <div class="form-group">
+                            <label for="guideline-category">Category</label>
+                            <select class="form-control" id="guideline-category">
+                                <option value="Communication Style">Communication Style</option>
+                                <option value="Response Length">Response Length</option>
+                                <option value="Product Knowledge">Product Knowledge</option>
+                                <option value="Tone">Tone</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="guideline-title">Title</label>
+                            <input type="text" class="form-control" id="guideline-title" placeholder="e.g., 'Be Friendly'">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="guideline-description">Description</label>
+                            <textarea class="form-control" id="guideline-description" placeholder="Describe the guideline..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="guideline-priority">Priority</label>
+                            <select class="form-control" id="guideline-priority">
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </div>
+                        
+                        <button class="btn btn-success" onclick="addGuideline()">
+                            <i class="fas fa-save"></i> Save Guideline
+                        </button>
+                        <button class="btn" onclick="document.getElementById('add-guideline-form').style.display='none'" style="background: var(--gray); color: white;">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                    
+                    <div id="guidelines-display">
+                        <p style="text-align: center; color: var(--gray); padding: 40px;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading AI guidelines...
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="ai-testing-tab">
+                <div class="section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-vial"></i> AI Testing</h2>
+                    </div>
+                    
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 300px;">
+                            <div class="form-group">
+                                <label for="test-phone">Test Phone Number</label>
+                                <input type="text" class="form-control" id="test-phone" placeholder="Enter test phone number" value="+1234567890">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="test-message">Test Message</label>
+                                <textarea class="form-control" id="test-message" placeholder="Type a message as a customer..." rows="3"></textarea>
+                            </div>
+                            
+                            <button class="btn btn-primary" onclick="sendTestMessage()" id="test-send-btn">
+                                <i class="fas fa-paper-plane"></i> Send Test Message
+                            </button>
+                            
+                            <button class="btn" onclick="resetTestConversation()" style="background: var(--gray); color: white; margin-left: 10px;">
+                                <i class="fas fa-redo"></i> Reset Chat
+                            </button>
+                        </div>
+                        
+                        <div style="flex: 1; min-width: 300px;">
+                            <div style="background: var(--light); border-radius: 8px; padding: 15px; height: 300px; overflow-y: auto;" id="test-chat-area">
+                                <div style="text-align: center; color: var(--gray); padding: 20px;">
+                                    <i class="fas fa-comments"></i>
+                                    <p>Test conversation will appear here</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <span class="status-indicator"></span>
+            System Online | <span id="timestamp"></span>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and content
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                
+                // Show corresponding content
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+                
+                // Load data for active tab if needed
+                if (tabId === 'business-info') {
+                    loadBusinessInfo();
+                } else if (tabId === 'ai-guidelines') {
+                    loadGuidelines();
+                } else if (tabId === 'ai-testing') {
+                    loadTestHistory();
+                }
+            });
+        });
+
+        // Load stats on page load
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                
+                document.getElementById('contactCount').textContent = stats.totalContacts;
+                document.getElementById('messageCount').textContent = stats.totalMessages;
+                document.getElementById('memoryCount').textContent = stats.memoryItems;
+                document.getElementById('trainingCount').textContent = stats.trainingExamples;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load business information
+        async function loadBusinessInfo() {
+            try {
+                const response = await fetch('/api/business-info');
+                const data = await response.json();
+                
+                let html = '';
+                if (Object.keys(data).length > 0) {
+                    for (const [category, items] of Object.entries(data)) {
+                        html += `<h3 style="color: var(--primary); margin: 20px 0 15px; text-transform: uppercase; font-size: 1.1rem;">${category}</h3>`;
+                        for (const [key, value] of Object.entries(items)) {
+                            html += `
+                                <div class="memory-item">
+                                    <div class="memory-category">${category}</div>
+                                    <div class="memory-key">${key}</div>
+                                    <div class="memory-value">${value}</div>
+                                </div>
+                            `;
+                        }
+                    }
+                } else {
+                    html = '<p style="text-align: center; color: var(--gray); padding: 40px;"><i class="fas fa-info-circle"></i> No business information added yet. Add some using the form above!</p>';
+                }
+                
+                document.getElementById('business-memory-display').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading business info:', error);
+                document.getElementById('business-memory-display').innerHTML = '<p style="text-align: center; color: var(--danger);">Error loading business information</p>';
+            }
+        }
+
+        // Add business information
+        async function addBusinessInfo() {
+            const category = document.getElementById('category').value;
+            const key = document.getElementById('key').value;
+            const value = document.getElementById('value').value;
+            const notes = document.getElementById('notes').value;
+            
+            if (!key || !value) {
+                alert('Please fill in both Topic/Question and Answer/Information fields');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/business-info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category, key, value, notes })
+                });
+                
+                if (response.ok) {
+                    // Reset form
+                    document.getElementById('key').value = '';
+                    document.getElementById('value').value = '';
+                    document.getElementById('notes').value = '';
+                    document.getElementById('add-business-form').style.display = 'none';
+                    
+                    // Reload business info
+                    loadBusinessInfo();
+                    loadStats();
+                    
+                    alert('Business information saved successfully!');
+                } else {
+                    throw new Error('Failed to save');
+                }
+            } catch (error) {
+                console.error('Error saving business info:', error);
+                alert('Error saving business information');
+            }
+        }
+
+        // Load AI guidelines
+        async function loadGuidelines() {
+            try {
+                const response = await fetch('/api/ai-guidelines');
+                const guidelines = await response.json();
+                
+                let html = '';
+                if (guidelines.length > 0) {
+                    guidelines.forEach(guide => {
+                        html += `
+                            <div class="memory-item">
+                                <div class="memory-category">${guide.category}</div>
+                                <div class="memory-key">${guide.title}</div>
+                                <div class="memory-value">${guide.description}</div>
+                                <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <span style="background: var(--light); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">Priority: ${guide.priority}</span>
+                                    <span style="background: ${guide.active === 'Yes' ? '#d4edda' : '#f8d7da'}; color: ${guide.active === 'Yes' ? '#155724' : '#721c24'}; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">
+                                        ${guide.active === 'Yes' ? 'Active' : 'Inactive'}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html = '<p style="text-align: center; color: var(--gray); padding: 40px;"><i class="fas fa-info-circle"></i> No AI guidelines added yet. Add some using the form above!</p>';
+                }
+                
+                document.getElementById('guidelines-display').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading guidelines:', error);
+                document.getElementById('guidelines-display').innerHTML = '<p style="text-align: center; color: var(--danger);">Error loading AI guidelines</p>';
+            }
+        }
+
+        // Add AI guideline
+        async function addGuideline() {
+            const category = document.getElementById('guideline-category').value;
+            const title = document.getElementById('guideline-title').value;
+            const description = document.getElementById('guideline-description').value;
+            const priority = document.getElementById('guideline-priority').value;
+            
+            if (!title || !description) {
+                alert('Please fill in both Title and Description fields');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/ai-guidelines', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category, title, description, priority })
+                });
+                
+                if (response.ok) {
+                    // Reset form
+                    document.getElementById('guideline-title').value = '';
+                    document.getElementById('guideline-description').value = '';
+                    document.getElementById('add-guideline-form').style.display = 'none';
+                    
+                    // Reload guidelines
+                    loadGuidelines();
+                    
+                    alert('AI guideline saved successfully!');
+                } else {
+                    throw new Error('Failed to save');
+                }
+            } catch (error) {
+                console.error('Error saving guideline:', error);
+                alert('Error saving AI guideline');
+            }
+        }
+
+        // Send test message
+        async function sendTestMessage() {
+            const phone = document.getElementById('test-phone').value;
+            const message = document.getElementById('test-message').value;
+            const sendBtn = document.getElementById('test-send-btn');
+            
+            if (!phone || !message) {
+                alert('Please enter both phone number and message');
+                return;
+            }
+            
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            
+            try {
+                const response = await fetch('/api/test-chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, phone })
+                });
+                
+                const data = await response.json();
+                
+                // Add user message to chat
+                addMessageToTestChat(message, 'user');
+                
+                // Add AI response to chat
+                addMessageToTestChat(data.response, 'ai');
+                
+                // Clear input
+                document.getElementById('test-message').value = '';
+            } catch (error) {
+                console.error('Error sending test message:', error);
+                addMessageToTestChat('Error: Could not connect to AI service', 'ai');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Test Message';
+            }
+        }
+
+        // Add message to test chat area
+        function addMessageToTestChat(text, sender) {
+            const chatArea = document.getElementById('test-chat-area');
+            
+            // Remove placeholder if it exists
+            if (chatArea.innerHTML.includes('Test conversation will appear here')) {
+                chatArea.innerHTML = '';
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.style.marginBottom = '15px';
+            messageDiv.style.display = 'flex';
+            messageDiv.style.flexDirection = sender === 'user' ? 'row-reverse' : 'row';
+            
+            const bubble = document.createElement('div');
+            bubble.style.maxWidth = '70%';
+            bubble.style.padding = '12px 16px';
+            bubble.style.borderRadius = '18px';
+            bubble.style.wordWrap = 'break-word';
+            
+            if (sender === 'user') {
+                bubble.style.background = 'var(--primary)';
+                bubble.style.color = 'white';
+                bubble.style.borderBottomRightRadius = '4px';
+            } else {
+                bubble.style.background = 'white';
+                bubble.style.color = 'var(--dark)';
+                bubble.style.border = '1px solid var(--light-gray)';
+                bubble.style.borderBottomLeftRadius = '4px';
+            }
+            
+            bubble.textContent = text;
+            messageDiv.appendChild(bubble);
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // Reset test conversation
+        async function resetTestConversation() {
+            const phone = document.getElementById('test-phone').value;
+            if (confirm('Reset conversation history for this test number?')) {
+                document.getElementById('test-chat-area').innerHTML = `
+                    <div style="text-align: center; color: var(--gray); padding: 20px;">
+                        <i class="fas fa-comments"></i>
+                        <p>Test conversation will appear here</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Load test history
+        async function loadTestHistory() {
+            const phone = document.getElementById('test-phone').value;
+            if (!phone) return;
+            
+            try {
+                const response = await fetch(`/api/test-history?phone=${encodeURIComponent(phone)}`);
+                const data = await response.json();
+                
+                const chatArea = document.getElementById('test-chat-area');
+                chatArea.innerHTML = '';
+                
+                if (data.history && data.history.length > 0) {
+                    data.history.forEach(msg => {
+                        if (msg.role === 'user') {
+                            addMessageToTestChat(msg.message, 'user');
+                        } else if (msg.role === 'assistant') {
+                            addMessageToTestChat(msg.message, 'ai');
+                        }
+                    });
+                } else {
+                    chatArea.innerHTML = `
+                        <div style="text-align: center; color: var(--gray); padding: 20px;">
+                            <i class="fas fa-comments"></i>
+                            <p>Start a conversation by sending a test message</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading test history:', error);
+            }
+        }
+
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('timestamp').textContent = now.toLocaleString();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            updateTimestamp();
+            setInterval(updateTimestamp, 1000);
+            
+            // Add event listeners
+            document.getElementById('test-phone').addEventListener('change', loadTestHistory);
+            document.getElementById('test-message').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendTestMessage();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Information - MUGEN AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #11998e;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            padding: 12px 24px;
+            background: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-tab:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            color: var(--dark);
+            font-size: 1.5rem;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--light-gray);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .memory-item {
+            background: var(--light);
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid var(--primary);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .memory-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .memory-category {
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .memory-key {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+
+        .memory-value {
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        </div>
+
+        <div class="header">
+            <h1><i class="fas fa-building"></i> Business Information</h1>
+            <p>Manage the knowledge base that powers your AI assistant</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('manage')">
+                <i class="fas fa-edit"></i> Add/Edit Information
+            </button>
+            <button class="nav-tab" onclick="showTab('view')">
+                <i class="fas fa-eye"></i> View All Information
+            </button>
+        </div>
+
+        <div id="manage-tab" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-plus-circle"></i> Add Business Information</h2>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select class="form-control" id="category">
+                        <option value="products">Products</option>
+                        <option value="pricing">Pricing</option>
+                        <option value="shipping">Shipping/Delivery</option>
+                        <option value="faq">FAQ</option>
+                        <option value="policies">Policies</option>
+                        <option value="general">General Info</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="key">Topic/Question</label>
+                    <input type="text" class="form-control" id="key" placeholder="e.g., 'RTX 4060 price' or 'delivery time'">
+                </div>
+                
+                <div class="form-group">
+                    <label for="value">Answer/Information</label>
+                    <textarea class="form-control" id="value" placeholder="e.g., '₦450,000' or '2-3 days in Lagos, 5-7 days nationwide'"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notes">Notes (optional)</label>
+                    <input type="text" class="form-control" id="notes" placeholder="Internal notes...">
+                </div>
+                
+                <button class="btn btn-success" onclick="addBusinessInfo()">
+                    <i class="fas fa-save"></i> Save Information
+                </button>
+            </div>
+        </div>
+
+        <div id="view-tab" class="tab-content" style="display: none;">
+            <div class="section">
+                <div class="section-header">
+                    <h2><i class="fas fa-database"></i> All Business Information</h2>
+                    <button class="btn btn-primary" onclick="loadBusinessInfo()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+                
+                <div id="business-memory-display">
+                    <p style="text-align: center; color: var(--gray); padding: 40px;">
+                        <i class="fas fa-spinner fa-spin"></i> Loading business information...
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Business Information Manager | MUGEN AI System</p>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Remove active class from all nav tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).style.display = 'block';
+            
+            // Add active class to clicked nav tab
+            event.target.classList.add('active');
+            
+            // Load data if viewing
+            if (tabName === 'view') {
+                loadBusinessInfo();
+            }
+        }
+
+        // Add business information
+        async function addBusinessInfo() {
+            const category = document.getElementById('category').value;
+            const key = document.getElementById('key').value;
+            const value = document.getElementById('value').value;
+            const notes = document.getElementById('notes').value;
+            
+            if (!key || !value) {
+                alert('Please fill in both Topic/Question and Answer/Information fields');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/business-info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category, key, value, notes })
+                });
+                
+                if (response.ok) {
+                    // Reset form
+                    document.getElementById('key').value = '';
+                    document.getElementById('value').value = '';
+                    document.getElementById('notes').value = '';
+                    
+                    alert('Business information saved successfully!');
+                } else {
+                    throw new Error('Failed to save');
+                }
+            } catch (error) {
+                console.error('Error saving business info:', error);
+                alert('Error saving business information');
+            }
+        }
+
+        // Load business information
+        async function loadBusinessInfo() {
+            try {
+                const response = await fetch('/api/business-info');
+                const data = await response.json();
+                
+                let html = '';
+                if (Object.keys(data).length > 0) {
+                    for (const [category, items] of Object.entries(data)) {
+                        html += `<h3 style="color: var(--primary); margin: 20px 0 15px; text-transform: uppercase; font-size: 1.1rem;">${category}</h3>`;
+                        for (const [key, value] of Object.entries(items)) {
+                            html += `
+                                <div class="memory-item">
+                                    <div class="memory-category">${category}</div>
+                                    <div class="memory-key">${key}</div>
+                                    <div class="memory-value">${value}</div>
+                                </div>
+                            `;
+                        }
+                    }
+                } else {
+                    html = '<p style="text-align: center; color: var(--gray); padding: 40px;"><i class="fas fa-info-circle"></i> No business information added yet.</p>';
+                }
+                
+                document.getElementById('business-memory-display').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading business info:', error);
+                document.getElementById('business-memory-display').innerHTML = '<p style="text-align: center; color: var(--danger);">Error loading business information</p>';
+            }
+        }
+
+        // Load on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBusinessInfo();
+        });
+    </script>
+</body>
+</html>

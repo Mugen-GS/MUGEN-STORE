@@ -1,17 +1,17 @@
 const { getSheetValues, appendSheetValues, updateSheetValues } = require('./sheetsService');
 
-// User management
-const getUser = async (phoneNumber) => {
+// Contact management (replaces User management)
+const getContact = async (phoneNumber) => {
   try {
-    console.log(`👤 Getting user: ${phoneNumber}`);
-    const rows = await getSheetValues('Users');
-    console.log(`📋 All user rows:`, rows.length);
+    console.log(`👤 Getting contact: ${phoneNumber}`);
+    const rows = await getSheetValues('Contacts');
+    console.log(`📋 All contact rows:`, rows.length);
     if (rows.length > 0) {
       console.log(`📋 Header row:`, rows[0]);
       console.log(`📋 First data row:`, rows[1]);
       console.log(`📋 Looking for phone: ${phoneNumber}`);
     }
-    const userRow = rows.slice(1).find(row => {
+    const contactRow = rows.slice(1).find(row => {
       // Handle type differences - convert both to strings for comparison
       const storedPhone = String(row[0]);
       const searchPhone = String(phoneNumber);
@@ -20,39 +20,40 @@ const getUser = async (phoneNumber) => {
       return match;
     }); // Skip header row
     
-    if (!userRow) {
-      console.log(`❓ User not found: ${phoneNumber}`);
+    if (!contactRow) {
+      console.log(`❓ Contact not found: ${phoneNumber}`);
       return null;
     }
     
-    console.log(`✅ Found user: ${phoneNumber}`);
+    console.log(`✅ Found contact: ${phoneNumber}`);
     return {
-      phoneNumber: userRow[0],
-      name: userRow[1],
-      firstContactDate: userRow[2],
-      lastContactDate: userRow[3],
-      messageCount: parseInt(userRow[4]) || 0,
-      leadStatus: userRow[5],
-      notes: userRow[6] || ''
+      phoneNumber: contactRow[0],
+      name: contactRow[1],
+      firstContactDate: contactRow[2],
+      lastContactDate: contactRow[3],
+      totalMessages: parseInt(contactRow[4]) || 0,
+      leadStatus: contactRow[5],
+      tags: contactRow[6] || '',
+      notes: contactRow[7] || ''
     };
   } catch (error) {
-    console.error('Error getting user:', error.message);
+    console.error('Error getting contact:', error.message);
     return null;
   }
 };
 
-const createOrUpdateUser = async (phoneNumber, name = null) => {
+const createOrUpdateContact = async (phoneNumber, name = null) => {
   try {
-    console.log(`👤 Creating/updating user: ${phoneNumber} (${name})`);
-    const rows = await getSheetValues('Users');
-    console.log(`📋 All user rows:`, rows.length);
+    console.log(`👤 Creating/updating contact: ${phoneNumber} (${name})`);
+    const rows = await getSheetValues('Contacts');
+    console.log(`📋 All contact rows:`, rows.length);
     if (rows.length > 0) {
       console.log(`📋 Header row:`, rows[0]);
       console.log(`📋 First data row:`, rows[1]);
       console.log(`📋 Looking for phone: ${phoneNumber}`);
     }
-    const users = rows.slice(1); // Skip header
-    const userIndex = users.findIndex(row => {
+    const contacts = rows.slice(1); // Skip header
+    const contactIndex = contacts.findIndex(row => {
       // Handle type differences - convert both to strings for comparison
       const storedPhone = String(row[0]);
       const searchPhone = String(phoneNumber);
@@ -61,123 +62,146 @@ const createOrUpdateUser = async (phoneNumber, name = null) => {
       return match;
     });
     
-    if (userIndex !== -1) {
-      // Update existing user
-      console.log(`🔄 Updating existing user: ${phoneNumber}`);
-      const existingUser = users[userIndex];
+    const currentTime = new Date().toISOString();
+    
+    if (contactIndex !== -1) {
+      // Update existing contact
+      console.log(`🔄 Updating existing contact: ${phoneNumber}`);
+      const existingContact = contacts[contactIndex];
       const updatedRow = [
         phoneNumber,
-        name || existingUser[1],
-        existingUser[2], // Keep first contact date
-        new Date().toISOString(),
-        (parseInt(existingUser[4]) || 0) + 1,
-        existingUser[5],
-        existingUser[6] || ''
+        name || existingContact[1],
+        existingContact[2], // Keep first contact date
+        currentTime, // Update last contact date
+        (parseInt(existingContact[4]) || 0) + 1, // Increment total messages
+        existingContact[5], // Keep lead status
+        existingContact[6] || '', // Keep tags
+        existingContact[7] || '' // Keep notes
       ];
       
-      await updateSheetValues('Users', userIndex + 2, updatedRow); // +2 because: 1 for header, 1 for 1-based index
+      await updateSheetValues('Contacts', contactIndex + 2, updatedRow); // +2 because: 1 for header, 1 for 1-based index
       
       return {
         phoneNumber: updatedRow[0],
         name: updatedRow[1],
         firstContactDate: updatedRow[2],
         lastContactDate: updatedRow[3],
-        messageCount: updatedRow[4],
+        totalMessages: updatedRow[4],
         leadStatus: updatedRow[5],
-        notes: updatedRow[6]
+        tags: updatedRow[6],
+        notes: updatedRow[7]
       };
     } else {
-      // Create new user
-      console.log(`🆕 Creating new user: ${phoneNumber}`);
+      // Create new contact
+      console.log(`🆕 Creating new contact: ${phoneNumber}`);
       const newRow = [
         phoneNumber,
         name || 'Unknown',
-        new Date().toISOString(),
-        new Date().toISOString(),
-        1,
-        'browsing',
-        ''
+        currentTime, // First contact date
+        currentTime, // Last contact date
+        1, // Total messages starts at 1
+        'browsing', // Default lead status
+        '', // No tags initially
+        '' // No notes initially
       ];
       
-      await appendSheetValues('Users', newRow);
+      await appendSheetValues('Contacts', newRow);
       
       return {
         phoneNumber: newRow[0],
         name: newRow[1],
         firstContactDate: newRow[2],
         lastContactDate: newRow[3],
-        messageCount: newRow[4],
+        totalMessages: newRow[4],
         leadStatus: newRow[5],
-        notes: newRow[6]
+        tags: newRow[6],
+        notes: newRow[7]
       };
     }
   } catch (error) {
-    console.error('Error creating/updating user:', error.message);
+    console.error('Error creating/updating contact:', error.message);
     return null;
   }
 };
 
-const getUserConversationHistory = async (phoneNumber, limit = 10) => {
+// Message management (replaces Conversation management)
+const saveMessage = async (messageData) => {
   try {
-    console.log(`🔍 Loading conversation history for: ${phoneNumber}`);
-    const rows = await getSheetValues('Conversations');
-    const conversations = rows.slice(1); // Skip header
+    console.log(`💾 Saving message for ${messageData.phoneNumber}`);
     
-    console.log(`📊 Total conversations in sheet: ${conversations.length}`);
+    // Generate a unique MessageID
+    const messageId = `${messageData.phoneNumber}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
-    const userConversations = conversations
+    const row = [
+      messageId,
+      messageData.phoneNumber,
+      new Date().toISOString(),
+      messageData.role, // 'user' or 'assistant'
+      messageData.message,
+      messageData.sessionId || 'default-session',
+      messageData.messageType || 'other', // 'greeting', 'question', 'request', 'response', 'closing', 'other'
+      messageData.sentiment || 'neutral', // 'positive', 'neutral', 'negative'
+      messageData.intent || 'other' // 'pricing', 'support', 'browsing', 'purchase', 'other'
+    ];
+    
+    await appendSheetValues('Messages', row);
+    
+    return messageId;
+  } catch (error) {
+    console.error('Error saving message:', error.message);
+    return null;
+  }
+};
+
+const getContactMessageHistory = async (phoneNumber, limit = 10) => {
+  try {
+    console.log(`🔍 Loading message history for: ${phoneNumber}`);
+    const rows = await getSheetValues('Messages');
+    const messages = rows.slice(1); // Skip header
+    
+    console.log(`📊 Total messages in sheet: ${messages.length}`);
+    
+    const contactMessages = messages
       .filter(row => {
         // Handle type differences - convert both to strings for comparison
-        const storedPhone = String(row[0]);
+        const storedPhone = String(row[1]); // Phone number is in column 2 (index 1)
         const searchPhone = String(phoneNumber);
         const match = storedPhone === searchPhone;
-        console.log(`  🔍 Filtering conversation: '${storedPhone}' === '${searchPhone}' ? ${match}`);
+        console.log(`  🔍 Filtering message: '${storedPhone}' === '${searchPhone}' ? ${match}`);
         return match;
       })
       .map(row => ({
-        phoneNumber: row[0],
-        timestamp: row[1],
-        userMessage: row[2],
-        aiResponse: row[3]
+        messageId: row[0],
+        phoneNumber: row[1],
+        timestamp: row[2],
+        role: row[3],
+        message: row[4],
+        sessionId: row[5],
+        messageType: row[6],
+        sentiment: row[7],
+        intent: row[8]
       }));
     
-    console.log(`📚 Found ${userConversations.length} previous messages for ${phoneNumber}`);
-    if (userConversations.length > 0) {
+    console.log(`📚 Found ${contactMessages.length} previous messages for ${phoneNumber}`);
+    if (contactMessages.length > 0) {
       console.log('📝 Sample messages:');
-      userConversations.slice(0, 2).forEach((msg, idx) => {
-        console.log(`  ${idx+1}. User: ${msg.userMessage.substring(0, 50)}...`);
-        console.log(`     AI: ${msg.aiResponse.substring(0, 50)}...`);
+      contactMessages.slice(0, 2).forEach((msg, idx) => {
+        console.log(`  ${idx+1}. ${msg.role}: ${msg.message.substring(0, 50)}...`);
       });
     }
-    return userConversations.slice(-limit);
+    return contactMessages.slice(-limit);
   } catch (error) {
-    console.error('Error getting user conversation history:', error.message);
+    console.error('Error getting contact message history:', error.message);
     return [];
   }
 };
 
-const saveConversation = async (phoneNumber, userMessage, aiResponse) => {
+// Lead management (simplified since it's now part of Contacts)
+const updateContactLeadStatus = async (phoneNumber, status) => {
   try {
-    console.log(`💾 Saving conversation for ${phoneNumber}`);
-    const row = [
-      phoneNumber,
-      new Date().toISOString(),
-      userMessage,
-      aiResponse
-    ];
-    
-    await appendSheetValues('Conversations', row);
-  } catch (error) {
-    console.error('Error saving conversation:', error.message);
-  }
-};
-
-// Lead management
-const saveLead = async (phoneNumber, name, leadData = {}) => {
-  try {
-    const rows = await getSheetValues('Leads');
-    const leads = rows.slice(1); // Skip header
-    const leadIndex = leads.findIndex(row => {
+    const rows = await getSheetValues('Contacts');
+    const contacts = rows.slice(1); // Skip header
+    const contactIndex = contacts.findIndex(row => {
       // Handle type differences - convert both to strings for comparison
       const storedPhone = String(row[0]);
       const searchPhone = String(phoneNumber);
@@ -185,72 +209,32 @@ const saveLead = async (phoneNumber, name, leadData = {}) => {
       return match;
     });
     
-    const leadRow = [
-      phoneNumber,
-      name,
-      new Date().toISOString(),
-      leadData.status || 'interested',
-      leadData.score || 50,
-      Array.isArray(leadData.interests) ? leadData.interests.join(', ') : '',
-      leadData.budget || '',
-      leadData.notes || ''
-    ];
-    
-    if (leadIndex !== -1) {
-      // Update existing lead
-      await updateSheetValues('Leads', leadIndex + 2, leadRow); // +2 for header and 1-based index
-    } else {
-      // Add new lead
-      await appendSheetValues('Leads', leadRow);
-    }
-    
-    return {
-      phoneNumber: leadRow[0],
-      name: leadRow[1],
-      timestamp: leadRow[2],
-      status: leadRow[3],
-      score: leadRow[4],
-      interests: leadRow[5],
-      budget: leadRow[6],
-      notes: leadRow[7]
-    };
-  } catch (error) {
-    console.error('Error saving lead:', error.message);
-    return null;
-  }
-};
-
-const updateLeadStatus = async (phoneNumber, status) => {
-  try {
-    const rows = await getSheetValues('Leads');
-    const leads = rows.slice(1); // Skip header
-    const leadIndex = leads.findIndex(row => {
-      // Handle type differences - convert both to strings for comparison
-      const storedPhone = String(row[0]);
-      const searchPhone = String(phoneNumber);
-      const match = storedPhone === searchPhone;
-      return match;
-    });
-    
-    if (leadIndex !== -1) {
-      const existingLead = leads[leadIndex];
-      existingLead[3] = status; // Update status column
+    if (contactIndex !== -1) {
+      const existingContact = [...contacts[contactIndex]]; // Create a copy
+      existingContact[5] = status; // Update lead status column (index 5)
       
-      await updateSheetValues('Leads', leadIndex + 2, existingLead);
+      await updateSheetValues('Contacts', contactIndex + 2, existingContact);
       return true;
     }
     return false;
   } catch (error) {
-    console.error('Error updating lead status:', error.message);
+    console.error('Error updating contact lead status:', error.message);
     return false;
   }
 };
 
+// Session management for grouping messages
+const generateSessionId = (phoneNumber) => {
+  // Create session ID based on phone number and current date
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  return `${phoneNumber}-${today}`;
+};
+
 module.exports = {
-  getUser,
-  createOrUpdateUser,
-  saveConversation,
-  getUserConversationHistory,
-  saveLead,
-  updateLeadStatus
+  getContact,
+  createOrUpdateContact,
+  saveMessage,
+  getContactMessageHistory,
+  updateContactLeadStatus,
+  generateSessionId
 };
