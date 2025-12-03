@@ -297,14 +297,5 @@ module.exports = {
   getContactChatHistory,
   updateContactLeadStatus,
   generateSessionId
-};return date.toISOString().replace('T', ' ').substring(0, 16);
 };
 
-module.exports = {
-  getContact,
-  createOrUpdateContact,
-  addMessageToContactHistory,
-  getContactChatHistory,
-  updateContactLeadStatus,
-  generateSessionId
-};
