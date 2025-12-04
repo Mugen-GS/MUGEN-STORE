@@ -408,6 +408,12 @@
                 const isImageMessage = msg.message && msg.message.includes('[Image received]');
                 
                 if (isImageMessage) {
+                    // Extract image metadata
+                    const imageIdMatch = msg.message.match(/ID: ([^,]+)/);
+                    const imageTypeMatch = msg.message.match(/Type: (.+)/);
+                    const imageId = imageIdMatch ? imageIdMatch[1] : 'Unknown';
+                    const imageType = imageTypeMatch ? imageTypeMatch[1] : 'Unknown';
+                    
                     historyHTML += `
                         <div class="message ${isCustomer ? 'customer' : 'ai'}">
                             <div class="message-header">
@@ -415,7 +421,11 @@
                                 <span>${timestamp}</span>
                             </div>
                             <div class="message-content">
-                                <i class="fas fa-image"></i> Image received
+                                <i class="fas fa-image"></i> <strong>Image received</strong>
+                                <div style="margin-top: 8px; font-size: 0.9em;">
+                                    <div><strong>ID:</strong> ${imageId}</div>
+                                    <div><strong>Type:</strong> ${imageType}</div>
+                                </div>
                             </div>
                         </div>
                     `;

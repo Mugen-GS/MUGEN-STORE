@@ -120,11 +120,14 @@ app.post('/webhook', async (req, res) => {
               // Get contact name
               const contactName = contact.name || 'Customer';
               
-              // Respond to image with a message
-              const aiResponse = "Thanks for sending that image! I'm an AI assistant and can't process images directly, but I'm here to help with any questions about our products or services.";
+              // Create a message indicating image was received with metadata
+              const imageInfo = `[Image received] ID: ${message.image.id}, Type: ${message.image.mime_type}`;
               
-              // Add messages to contact's chat history
-              await addMessageToContactHistory(from, "[Image received]", aiResponse);
+              // Respond to image with a message
+              const aiResponse = "Thanks for sending that image! I'm an AI assistant and can't process images directly, but I've recorded your image and can help with any questions about our products or services.";
+              
+              // Add image info to contact's chat history
+              await addMessageToContactHistory(from, imageInfo, aiResponse);
               
               // Send response back to user
               try {
