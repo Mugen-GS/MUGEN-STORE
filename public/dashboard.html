@@ -553,19 +553,6 @@ GOOGLE_CLOUD_PROJECT_ID=your_project_id_here</pre>
                         </div>
                     </div>
                 </div>
-                
-                <!-- AI Help Requests Notification Board -->
-                <div class="section" id="ai-help-board" style="display: none;">
-                    <div class="section-header">
-                        <h2><i class="fas fa-bell"></i> AI Help Requests</h2>
-                        <button class="btn btn-primary" onclick="clearHelpRequests()">
-                            <i class="fas fa-trash"></i> Clear All
-                        </button>
-                    </div>
-                    <div id="help-requests-list">
-                        <p>No help requests at the moment. The AI will notify you here when it needs assistance.</p>
-                    </div>
-                </div>
             </div>
 
             <div class="tab-content" id="business-tab">
@@ -761,6 +748,8 @@ GOOGLE_CLOUD_PROJECT_ID=your_project_id_here</pre>
                 loadGuidelines();
             } else if (tabId === 'testing') {
                 loadTestHistory();
+            } else if (tabId === 'notifications') {
+                loadHelpRequests();
             }
         }
 
@@ -1144,8 +1133,7 @@ GOOGLE_CLOUD_PROJECT_ID=your_project_id_here</pre>
                         method: 'DELETE'
                     });
                     
-                    document.getElementById('help-requests-list').innerHTML = '<p>No help requests at the moment. The AI will notify you here when it needs assistance.</p>';
-                    document.getElementById('ai-help-board').style.display = 'none';
+                    document.getElementById('help-requests-list').innerHTML = '<p>No notifications at the moment. The AI will notify you here when it needs assistance.</p>';
                 } catch (error) {
                     console.error('Error clearing help requests:', error);
                     alert('Error clearing help requests');
