@@ -247,26 +247,14 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        textarea.form-control {
-            min-height: 120px;
-            resize: vertical;
-        }
-
-        .memory-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
         .memory-item {
             background: var(--light);
             border-radius: 8px;
-            padding: 20px;
-            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin-bottom: 15px;
         }
 
         .memory-category {
-            font-weight: 700;
             color: var(--primary);
             margin-bottom: 10px;
             text-transform: uppercase;
@@ -420,22 +408,13 @@
                 </button>
             </div>
 
+            <!-- Overview Tab -->
             <div class="tab-content active" id="overview-tab">
                 <div class="section">
                     <div class="section-header">
                         <h2><i class="fas fa-chart-line"></i> System Overview</h2>
                     </div>
                     <p>Welcome to your MUGEN AI Dashboard. Here you can manage your AI assistant, view statistics, and configure how your AI interacts with customers.</p>
-                    
-                    <div style="margin-top: 20px; padding: 20px; background: var(--light); border-radius: 8px;">
-                        <h3><i class="fas fa-lightbulb"></i> Quick Tips</h3>
-                        <ul style="margin-top: 10px; padding-left: 20px;">
-                            <li style="margin-bottom: 8px;">Add business information in the "Business Info" section for the AI to reference</li>
-                            <li style="margin-bottom: 8px;">Define AI guidelines to control how your assistant communicates</li>
-                            <li style="margin-bottom: 8px;">Test your AI regularly to ensure it's performing as expected</li>
-                            <li style="margin-bottom: 8px;"><a href="/live-data.html" style="color: var(--primary); text-decoration: none;"><i class="fas fa-external-link-alt"></i> View Live Data</a> - See real-time contact information and chat history</li>
-                        </ul>
-                    </div>
                     
                     <div style="margin-top: 20px; padding: 20px; background: var(--light); border-radius: 8px;">
                         <h3><i class="fas fa-link"></i> Quick Links</h3>
@@ -456,6 +435,15 @@
                                 <i class="fas fa-database"></i> Live Data
                             </a>
                         </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 20px; background: var(--light); border-radius: 8px;">
+                        <h3><i class="fas fa-lightbulb"></i> Quick Tips</h3>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li style="margin-bottom: 8px;">Add business information in the "Business Info" section for the AI to reference</li>
+                            <li style="margin-bottom: 8px;">Define AI guidelines to control how your assistant communicates</li>
+                            <li style="margin-bottom: 8px;">Test your AI regularly to ensure it's performing as expected</li>
+                        </ul>
                     </div>
                     
                     <!-- Image and AI Information Section -->
@@ -555,6 +543,7 @@ GOOGLE_CLOUD_PROJECT_ID=your_project_id_here</pre>
                 </div>
             </div>
 
+            <!-- Business Info Tab -->
             <div class="tab-content" id="business-tab">
                 <div class="section">
                     <div class="section-header">
@@ -609,6 +598,7 @@ GOOGLE_CLOUD_PROJECT_ID=your_project_id_here</pre>
                 </div>
             </div>
 
+            <!-- AI Guidelines Tab -->
             <div class="tab-content" id="guidelines-tab">
                 <div class="section">
                     <div class="section-header">
@@ -666,6 +656,7 @@ GOOGLE_CLOUD_PROJECT_ID=your_project_id_here</pre>
                 </div>
             </div>
 
+            <!-- AI Testing Tab -->
             <div class="tab-content" id="testing-tab">
                 <div class="section">
                     <div class="section-header">
@@ -704,8 +695,8 @@ GOOGLE_CLOUD_PROJECT_ID=your_project_id_here</pre>
                     </div>
                 </div>
             </div>
-            
-            <!-- Add this new section for notifications -->
+
+            <!-- Notifications Tab -->
             <div class="tab-content" id="notifications-tab">
                 <div class="section">
                     <div class="section-header">
@@ -719,7 +710,6 @@ GOOGLE_CLOUD_PROJECT_ID=your_project_id_here</pre>
                     </div>
                 </div>
             </div>
-
         </div>
 
         <div class="footer">
@@ -736,10 +726,16 @@ GOOGLE_CLOUD_PROJECT_ID=your_project_id_here</pre>
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             
             // Add active class to clicked tab
-            document.querySelector(`.nav-tab[onclick="showTab('${tabId}')"]`).classList.add('active');
+            const tabButton = document.querySelector(`.nav-tab[onclick="showTab('${tabId}')"]`);
+            if (tabButton) {
+                tabButton.classList.add('active');
+            }
             
             // Show corresponding content
-            document.getElementById(`${tabId}-tab`).classList.add('active');
+            const tabContent = document.getElementById(`${tabId}-tab`);
+            if (tabContent) {
+                tabContent.classList.add('active');
+            }
             
             // Load data for active tab if needed
             if (tabId === 'business') {
@@ -923,8 +919,10 @@ GOOGLE_CLOUD_PROJECT_ID=your_project_id_here</pre>
                 
                 if (response.ok) {
                     // Reset form
+                    document.getElementById('guideline-category').value = 'Communication Style';
                     document.getElementById('guideline-title').value = '';
                     document.getElementById('guideline-description').value = '';
+                    document.getElementById('guideline-priority').value = 'High';
                     document.getElementById('add-guideline-form').style.display = 'none';
                     
                     // Reload guidelines
@@ -1063,12 +1061,6 @@ GOOGLE_CLOUD_PROJECT_ID=your_project_id_here</pre>
             }
         }
 
-        // Update timestamp
-        function updateTimestamp() {
-            // This function is no longer needed since we have individual timestamps for each stat
-            // Keeping it for backward compatibility
-        }
-
         // Load help requests
         async function loadHelpRequests() {
             try {
@@ -1141,10 +1133,15 @@ GOOGLE_CLOUD_PROJECT_ID=your_project_id_here</pre>
             }
         }
 
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date().toLocaleString();
+            document.getElementById('timestamp').textContent = now;
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadStats();
-            loadHelpRequests(); // Load help requests on page load
             startStatsAutoRefresh(); // Start auto-refreshing stats
             updateTimestamp();
             setInterval(updateTimestamp, 1000);
