@@ -319,6 +319,9 @@
 
                 // Load contact info
                 const contactResponse = await fetch(`/api/contact-info?phone=${encodeURIComponent(phoneNumber)}`);
+                if (!contactResponse.ok) {
+                    throw new Error(`HTTP error! status: ${contactResponse.status}`);
+                }
                 const contactData = await contactResponse.json();
 
                 if (contactData.error) {
@@ -329,6 +332,9 @@
 
                 // Load chat history
                 const historyResponse = await fetch(`/api/test-history?phone=${encodeURIComponent(phoneNumber)}`);
+                if (!historyResponse.ok) {
+                    throw new Error(`HTTP error! status: ${historyResponse.status}`);
+                }
                 const historyData = await historyResponse.json();
 
                 if (historyData.error) {
@@ -338,6 +344,7 @@
                 displayChatHistory(historyData.history);
 
             } catch (error) {
+                console.error('Error loading data:', error);
                 showError(`Error loading data: ${error.message}`);
                 document.getElementById('contactInfo').innerHTML = '<div class="loading">Enter a phone number and click "Load Data" to view contact information</div>';
                 document.getElementById('chatHistory').innerHTML = '<div class="loading">Enter a phone number and click "Load Data" to view chat history</div>';
@@ -397,17 +404,34 @@
                 const isCustomer = msg.role === 'user';
                 const timestamp = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : 'Unknown time';
                 
-                historyHTML += `
-                    <div class="message ${isCustomer ? 'customer' : 'ai'}">
-                        <div class="message-header">
-                            <strong>${isCustomer ? 'Customer' : 'AI Assistant'}</strong>
-                            <span>${timestamp}</span>
+                // Check if this is an image message
+                const isImageMessage = msg.message && msg.message.includes('[Image received]');
+                
+                if (isImageMessage) {
+                    historyHTML += `
+                        <div class="message ${isCustomer ? 'customer' : 'ai'}">
+                            <div class="message-header">
+                                <strong>${isCustomer ? 'Customer' : 'AI Assistant'}</strong>
+                                <span>${timestamp}</span>
+                            </div>
+                            <div class="message-content">
+                                <i class="fas fa-image"></i> Image received
+                            </div>
                         </div>
-                        <div class="message-content">
-                            ${msg.message || 'No message content'}
+                    `;
+                } else {
+                    historyHTML += `
+                        <div class="message ${isCustomer ? 'customer' : 'ai'}">
+                            <div class="message-header">
+                                <strong>${isCustomer ? 'Customer' : 'AI Assistant'}</strong>
+                                <span>${timestamp}</span>
+                            </div>
+                            <div class="message-content">
+                                ${msg.message || 'No message content'}
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                }
             });
 
             document.getElementById('chatHistory').innerHTML = historyHTML;

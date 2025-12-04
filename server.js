@@ -12,7 +12,11 @@ app.use(express.urlencoded({ extended: true }));
 
 // Import services
 const { getGeminiResponse, detectBuyingIntent, calculateLeadScore } = require('./geminiService');
-const { sendWhatsAppMessage, markAsRead } = require('./whatsappService');
+const { 
+  sendWhatsAppMessage, 
+  sendWhatsAppImage, 
+  markAsRead 
+} = require('./whatsappService');
 const { 
   getContact, 
   createOrUpdateContact, 
@@ -99,8 +103,65 @@ app.post('/webhook', async (req, res) => {
               } catch (sendError) {
                 console.error(`[ERROR] Failed to send response to ${contactName}:`, sendError.message);
               }
+            } else if (messageType === 'image') {
+              console.log(`\n=== 📱 NEW IMAGE FROM ${from} ===`);
+              console.log(`Image ID: ${message.image.id}`);
+              console.log(`Image MIME Type: ${message.image.mime_type}`);
+              console.log(`Image SHA256: ${message.image.sha256}`);
+              
+              // Get or create contact with normalized phone number
+              let contact = await getContact(from);
+              if (!contact) {
+                contact = await createOrUpdateContact(from);
+              } else {
+                contact = await createOrUpdateContact(from, contact.name);
+              }
+              
+              // Get contact name
+              const contactName = contact.name || 'Customer';
+              
+              // Respond to image with a message
+              const aiResponse = "Thanks for sending that image! I'm an AI assistant and can't process images directly, but I'm here to help with any questions about our products or services.";
+              
+              // Add messages to contact's chat history
+              await addMessageToContactHistory(from, "[Image received]", aiResponse);
+              
+              // Send response back to user
+              try {
+                await sendWhatsAppMessage(from, aiResponse);
+                console.log(`[INFO] Image response sent to ${contactName}`);
+                console.log(`Response: ${aiResponse}`);
+              } catch (sendError) {
+                console.error(`[ERROR] Failed to send image response to ${contactName}:`, sendError.message);
+              }
             } else {
               console.log(`[INFO] Received ${messageType} message from ${from} - not handled yet`);
+              
+              // Get or create contact with normalized phone number
+              let contact = await getContact(from);
+              if (!contact) {
+                contact = await createOrUpdateContact(from);
+              } else {
+                contact = await createOrUpdateContact(from, contact.name);
+              }
+              
+              // Get contact name
+              const contactName = contact.name || 'Customer';
+              
+              // Respond to unsupported message types
+              const aiResponse = `I received your ${messageType} message. I'm an AI assistant and can currently handle text messages. Please send me a text message if you have any questions!`;
+              
+              // Add messages to contact's chat history
+              await addMessageToContactHistory(from, `[${messageType} message received]`, aiResponse);
+              
+              // Send response back to user
+              try {
+                await sendWhatsAppMessage(from, aiResponse);
+                console.log(`[INFO] Unsupported message response sent to ${contactName}`);
+                console.log(`Response: ${aiResponse}`);
+              } catch (sendError) {
+                console.error(`[ERROR] Failed to send unsupported message response to ${contactName}:`, sendError.message);
+              }
             }
           }
           
@@ -363,10 +424,35 @@ app.post('/api/test-chat', async (req, res) => {
 app.get('/api/test-history', async (req, res) => {
   try {
     const phone = req.query.phone;
+    if (!phone) {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+    
     const history = await getContactChatHistory(phone, 20);
     res.json({ history });
   } catch (error) {
     console.error('[ERROR] Failed to load test history:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API: Test sending an image via WhatsApp
+app.post('/api/test-image', async (req, res) => {
+  try {
+    const { phone, imageUrl, caption } = req.body;
+    
+    if (!phone || !imageUrl) {
+      return res.status(400).json({ error: 'Phone number and image URL are required' });
+    }
+    
+    const response = await sendWhatsAppImage(phone, imageUrl, caption);
+    res.json({ 
+      success: true, 
+      message: 'Image sent successfully',
+      response: response
+    });
+  } catch (error) {
+    console.error('[ERROR] Failed to send test image:', error.message);
     res.status(500).json({ error: error.message });
   }
 });

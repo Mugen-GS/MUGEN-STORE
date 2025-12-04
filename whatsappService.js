@@ -45,6 +45,46 @@ async function sendWhatsAppMessage(to, message) {
 }
 
 /**
+ * Send an image message via WhatsApp Business API
+ * @param {string} to - Recipient phone number
+ * @param {string} imageUrl - URL of the image to send
+ * @param {string} caption - Optional caption for the image
+ * @returns {Promise<Object>} API response
+ */
+async function sendWhatsAppImage(to, imageUrl, caption = '') {
+  // Validate inputs
+  if (!to || !imageUrl) {
+    throw new Error('Missing required parameters: to, imageUrl');
+  }
+  
+  const url = `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_ID}/messages`;
+  
+  const data = {
+    messaging_product: 'whatsapp',
+    to: to,
+    type: 'image',
+    image: {
+      link: imageUrl,
+      caption: caption
+    }
+  };
+
+  try {
+    const response = await axios.post(url, data, {
+      headers: {
+        'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 10000 // 10 second timeout
+    });
+    
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
  * Mark message as read
  * @param {string} messageId - Message ID to mark as read
  */
@@ -77,5 +117,6 @@ async function markAsRead(messageId) {
 
 module.exports = {
   sendWhatsAppMessage,
+  sendWhatsAppImage,
   markAsRead
 };
