@@ -95,6 +95,24 @@ app.post('/webhook', async (req, res) => {
                 console.log(`[INFO] Lead score for ${contactName}: ${leadScore}/100`);
               }
               
+              // Check if AI response indicates it needs help
+              if (aiResponse.toLowerCase().includes('i don\'t understand') || 
+                  aiResponse.toLowerCase().includes('i\'m not sure') ||
+                  aiResponse.toLowerCase().includes('could you clarify') ||
+                  aiResponse.toLowerCase().includes('help me understand')) {
+                console.log(`[HELP REQUEST] AI needs help with message from ${from}: ${userMessage}`);
+                // Send help request to API
+                try {
+                  await axios.post('/api/help-request', {
+                    type: 'confusion',
+                    message: `AI needs help understanding: "${userMessage}" - AI responded: "${aiResponse}"`,
+                    from: from
+                  });
+                } catch (error) {
+                  console.error('[ERROR] Failed to send help request:', error.message);
+                }
+              }
+              
               // Send AI response back to user
               try {
                 await sendWhatsAppMessage(from, aiResponse);
@@ -137,6 +155,19 @@ app.post('/webhook', async (req, res) => {
               } catch (sendError) {
                 console.error(`[ERROR] Failed to send image response to ${contactName}:`, sendError.message);
               }
+              
+              // Notify that AI can't process images
+              console.log(`[HELP REQUEST] AI cannot process image from ${from}. Image ID: ${message.image.id}`);
+              // Send help request to API
+              try {
+                await axios.post('/api/help-request', {
+                  type: 'image_unsupported',
+                  message: `AI cannot process image. Image ID: ${message.image.id}, Type: ${message.image.mime_type}`,
+                  from: from
+                });
+              } catch (error) {
+                console.error('[ERROR] Failed to send help request:', error.message);
+              }
             } else {
               console.log(`[INFO] Received ${messageType} message from ${from} - not handled yet`);
               
@@ -164,6 +195,19 @@ app.post('/webhook', async (req, res) => {
                 console.log(`Response: ${aiResponse}`);
               } catch (sendError) {
                 console.error(`[ERROR] Failed to send unsupported message response to ${contactName}:`, sendError.message);
+              }
+              
+              // Notify that AI doesn't understand this message type
+              console.log(`[HELP REQUEST] AI cannot understand ${messageType} message from ${from}`);
+              // Send help request to API
+              try {
+                await axios.post('/api/help-request', {
+                  type: 'unsupported_message',
+                  message: `AI cannot understand ${messageType} message from ${from}`,
+                  from: from
+                });
+              } catch (error) {
+                console.error('[ERROR] Failed to send help request:', error.message);
               }
             }
           }
@@ -456,6 +500,56 @@ app.post('/api/test-image', async (req, res) => {
     });
   } catch (error) {
     console.error('[ERROR] Failed to send test image:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// In-memory storage for help requests (in production, you might want to use a database)
+let helpRequests = [];
+
+// API: Add help request
+app.post('/api/help-request', (req, res) => {
+  try {
+    const { type, message, from } = req.body;
+    
+    const helpRequest = {
+      id: Date.now(),
+      type,
+      message,
+      from,
+      timestamp: new Date().toISOString()
+    };
+    
+    helpRequests.push(helpRequest);
+    
+    // Keep only the last 50 help requests to prevent memory issues
+    if (helpRequests.length > 50) {
+      helpRequests = helpRequests.slice(-50);
+    }
+    
+    res.json({ success: true, message: 'Help request added' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API: Get help requests
+app.get('/api/help-requests', (req, res) => {
+  try {
+    // Return the last 10 help requests
+    const recentRequests = helpRequests.slice(-10);
+    res.json({ requests: recentRequests });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API: Clear help requests
+app.delete('/api/help-requests', (req, res) => {
+  try {
+    helpRequests = [];
+    res.json({ success: true, message: 'Help requests cleared' });
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });

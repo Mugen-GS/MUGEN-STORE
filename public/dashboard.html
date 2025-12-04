@@ -432,6 +432,38 @@
                             <li style="margin-bottom: 8px;">Test your AI regularly to ensure it's performing as expected</li>
                         </ul>
                     </div>
+                    
+                    <!-- Image and AI Information Section -->
+                    <div style="margin-top: 20px; padding: 20px; background: #e8f4f8; border-radius: 8px; border-left: 4px solid var(--primary);">
+                        <h3><i class="fas fa-info-circle"></i> Image Handling & AI Capabilities</h3>
+                        <div style="margin-top: 15px;">
+                            <p><strong>Where are images saved?</strong></p>
+                            <p>Images sent by customers are stored on WhatsApp's servers with unique IDs. Our system records the image metadata (ID and type) in your Google Sheets contact history for reference, but we don't download or store the actual image files.</p>
+                            
+                            <p><strong>Can the AI respond to images?</strong></p>
+                            <p>Currently, the AI cannot process or analyze images directly. When a customer sends an image, the system acknowledges receipt and informs the customer that images can't be processed. The AI will notify you through the Help Requests board when it receives an image it can't handle.</p>
+                            
+                            <p><strong>Future possibilities:</strong></p>
+                            <ul style="padding-left: 20px;">
+                                <li>Integration with Google Vision API for image analysis</li>
+                                <li>Automatic product recognition from images</li>
+                                <li>Visual search capabilities</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- AI Help Requests Notification Board -->
+                <div class="section" id="ai-help-board" style="display: none;">
+                    <div class="section-header">
+                        <h2><i class="fas fa-bell"></i> AI Help Requests</h2>
+                        <button class="btn btn-primary" onclick="clearHelpRequests()">
+                            <i class="fas fa-trash"></i> Clear All
+                        </button>
+                    </div>
+                    <div id="help-requests-list">
+                        <p>No help requests at the moment. The AI will notify you here when it needs assistance.</p>
+                    </div>
                 </div>
             </div>
 
@@ -654,6 +686,7 @@
                 // Only auto-refresh if the page is visible to save resources
                 if (!document.hidden) {
                     await loadStats();
+                    await loadHelpRequests(); // Also check for help requests
                 }
             }, 30000); // 30 seconds
         }
@@ -930,9 +963,84 @@
             // Keeping it for backward compatibility
         }
 
+        // Load help requests
+        async function loadHelpRequests() {
+            try {
+                const response = await fetch('/api/help-requests');
+                const data = await response.json();
+                
+                if (data.requests && data.requests.length > 0) {
+                    // Show help board and add requests
+                    const helpBoard = document.getElementById('ai-help-board');
+                    const helpList = document.getElementById('help-requests-list');
+                    
+                    helpBoard.style.display = 'block';
+                    
+                    // Clear current content
+                    helpList.innerHTML = '';
+                    
+                    // Add all requests (they're already sorted by timestamp)
+                    data.requests.forEach(request => {
+                        const requestElement = document.createElement('div');
+                        requestElement.style.padding = '15px';
+                        requestElement.style.border = '1px solid var(--light-gray)';
+                        requestElement.style.borderRadius = '8px';
+                        requestElement.style.marginBottom = '15px';
+                        requestElement.style.backgroundColor = 'white';
+                        
+                        const timestamp = new Date(request.timestamp).toLocaleString();
+                        let icon = 'fa-exclamation-circle';
+                        let title = 'AI Needs Help';
+                        
+                        if (request.type === 'image_unsupported') {
+                            icon = 'fa-image';
+                            title = 'Image Processing Needed';
+                        } else if (request.type === 'unsupported_message') {
+                            icon = 'fa-question-circle';
+                            title = 'Unsupported Message Type';
+                        } else if (request.type === 'confusion') {
+                            icon = 'fa-comment-dots';
+                            title = 'AI Confusion Detected';
+                        }
+                        
+                        requestElement.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <strong><i class="fas ${icon}" style="color: var(--warning);"></i> ${title}</strong>
+                                <span style="font-size: 0.8rem; color: var(--gray);">${timestamp}</span>
+                            </div>
+                            <div style="margin-top: 8px;">${request.message}</div>
+                            <div style="margin-top: 8px; font-size: 0.8rem; color: var(--gray);">From: ${request.from}</div>
+                        `;
+                        
+                        helpList.appendChild(requestElement);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading help requests:', error);
+            }
+        }
+
+        // Clear help requests
+        async function clearHelpRequests() {
+            if (confirm('Clear all help requests?')) {
+                try {
+                    await fetch('/api/help-requests', {
+                        method: 'DELETE'
+                    });
+                    
+                    document.getElementById('help-requests-list').innerHTML = '<p>No help requests at the moment. The AI will notify you here when it needs assistance.</p>';
+                    document.getElementById('ai-help-board').style.display = 'none';
+                } catch (error) {
+                    console.error('Error clearing help requests:', error);
+                    alert('Error clearing help requests');
+                }
+            }
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadStats();
+            loadHelpRequests(); // Load help requests on page load
             startStatsAutoRefresh(); // Start auto-refreshing stats
             updateTimestamp();
             setInterval(updateTimestamp, 1000);
