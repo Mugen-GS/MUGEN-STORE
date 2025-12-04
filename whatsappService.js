@@ -85,6 +85,47 @@ async function sendWhatsAppImage(to, imageUrl, caption = '') {
 }
 
 /**
+ * Download media from WhatsApp
+ * @param {string} mediaId - Media ID from WhatsApp
+ * @returns {Promise<Object>} Media data including URL
+ */
+async function downloadMedia(mediaId) {
+  // Validate input
+  if (!mediaId) {
+    throw new Error('Missing required parameter: mediaId');
+  }
+  
+  const url = `https://graph.facebook.com/v18.0/${mediaId}`;
+  
+  try {
+    // First, get the media URL
+    const response = await axios.get(url, {
+      headers: {
+        'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`
+      }
+    });
+    
+    const mediaUrl = response.data.url;
+    
+    // Then download the media
+    const mediaResponse = await axios.get(mediaUrl, {
+      headers: {
+        'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`
+      },
+      responseType: 'arraybuffer'
+    });
+    
+    return {
+      url: mediaUrl,
+      data: mediaResponse.data,
+      mimeType: response.data.mime_type
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
  * Mark message as read
  * @param {string} messageId - Message ID to mark as read
  */
@@ -118,5 +159,6 @@ async function markAsRead(messageId) {
 module.exports = {
   sendWhatsAppMessage,
   sendWhatsAppImage,
+  downloadMedia,
   markAsRead
 };

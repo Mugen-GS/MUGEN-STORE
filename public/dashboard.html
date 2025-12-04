@@ -412,8 +412,8 @@
                 <button class="nav-tab" onclick="showTab('testing')">
                     <i class="fas fa-vial"></i> AI Testing
                 </button>
-                <button class="nav-tab" onclick="window.location.href='/live-data.html'">
-                    <i class="fas fa-database"></i> Live Data
+                <button class="nav-tab" onclick="showTab('notifications')">
+                    <i class="fas fa-bell"></i> Notifications
                 </button>
             </div>
 
@@ -430,6 +430,7 @@
                             <li style="margin-bottom: 8px;">Add business information in the "Business Info" section for the AI to reference</li>
                             <li style="margin-bottom: 8px;">Define AI guidelines to control how your assistant communicates</li>
                             <li style="margin-bottom: 8px;">Test your AI regularly to ensure it's performing as expected</li>
+                            <li style="margin-bottom: 8px;"><a href="/live-data.html" style="color: var(--primary); text-decoration: none;"><i class="fas fa-external-link-alt"></i> View Live Data</a> - See real-time contact information and chat history</li>
                         </ul>
                     </div>
                     
@@ -443,11 +444,52 @@
                             <p><strong>Can the AI respond to images?</strong></p>
                             <p>Currently, the AI cannot process or analyze images directly. When a customer sends an image, the system acknowledges receipt and informs the customer that images can't be processed. The AI will notify you through the Help Requests board when it receives an image it can't handle.</p>
                             
-                            <p><strong>Future possibilities:</strong></p>
+                            <p><strong>Enabling AI Image Recognition:</strong></p>
+                            <p>To enable AI to read and understand images, we can integrate with Google Vision API. This would allow the AI to:</p>
                             <ul style="padding-left: 20px;">
-                                <li>Integration with Google Vision API for image analysis</li>
+                                <li>Describe what's in an image</li>
+                                <li>Recognize products, objects, and scenes</li>
+                                <li>Extract text from images (OCR)</li>
+                                <li>Detect faces and emotions</li>
+                                <li>Identify logos and landmarks</li>
+                            </ul>
+                            
+                            <p><strong>How to Enable Image Recognition:</strong></p>
+                            <p>To enable AI to read and understand images, follow these steps:</p>
+                            <ol style="padding-left: 20px;">
+                                <li>Create a Google Cloud Platform project at <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
+                                <li>Enable the Vision API in your project:
+                                    <ul style="padding-left: 20px; margin-top: 5px;">
+                                        <li>Go to "APIs & Services" > "Library"</li>
+                                        <li>Search for "Cloud Vision API"</li>
+                                        <li>Click "Enable"</li>
+                                    </ul>
+                                </li>
+                                <li>Generate an API key:
+                                    <ul style="padding-left: 20px; margin-top: 5px;">
+                                        <li>Go to "APIs & Services" > "Credentials"</li>
+                                        <li>Click "Create Credentials" > "API Key"</li>
+                                        <li>Copy the generated key</li>
+                                    </ul>
+                                </li>
+                                <li>Add the API key to your environment variables:
+                                    <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0;">
+GOOGLE_VISION_API_KEY=your_api_key_here
+GOOGLE_CLOUD_PROJECT_ID=your_project_id_here</pre>
+                                </li>
+                                <li>Install the required package (if not already installed):
+                                    <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0;">npm install @google-cloud/vision</pre>
+                                </li>
+                                <li>Uncomment the Google Vision API code in your server.js file</li>
+                                <li>Restart your server</li>
+                            </ol>
+
+                            <p><strong>Other Future possibilities:</strong></p>
+                            <ul style="padding-left: 20px;">
                                 <li>Automatic product recognition from images</li>
                                 <li>Visual search capabilities</li>
+                                <li>Image-based customer support</li>
+                                <li>Automated product catalog updates from photos</li>
                             </ul>
                         </div>
                     </div>
@@ -616,6 +658,22 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Add this new section for notifications -->
+            <div class="tab-content" id="notifications-tab">
+                <div class="section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-bell"></i> AI Notifications</h2>
+                        <button class="btn btn-primary" onclick="clearHelpRequests()">
+                            <i class="fas fa-trash"></i> Clear All Notifications
+                        </button>
+                    </div>
+                    <div id="help-requests-list">
+                        <p>No notifications at the moment. The AI will notify you here when it needs assistance.</p>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <div class="footer">
@@ -969,13 +1027,9 @@
                 const response = await fetch('/api/help-requests');
                 const data = await response.json();
                 
+                const helpList = document.getElementById('help-requests-list');
+                
                 if (data.requests && data.requests.length > 0) {
-                    // Show help board and add requests
-                    const helpBoard = document.getElementById('ai-help-board');
-                    const helpList = document.getElementById('help-requests-list');
-                    
-                    helpBoard.style.display = 'block';
-                    
                     // Clear current content
                     helpList.innerHTML = '';
                     
@@ -1014,9 +1068,12 @@
                         
                         helpList.appendChild(requestElement);
                     });
+                } else {
+                    helpList.innerHTML = '<p>No notifications at the moment. The AI will notify you here when it needs assistance.</p>';
                 }
             } catch (error) {
                 console.error('Error loading help requests:', error);
+                document.getElementById('help-requests-list').innerHTML = '<p>Error loading notifications</p>';
             }
         }
 

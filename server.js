@@ -15,6 +15,7 @@ const { getGeminiResponse, detectBuyingIntent, calculateLeadScore } = require('.
 const { 
   sendWhatsAppMessage, 
   sendWhatsAppImage, 
+  downloadMedia,
   markAsRead 
 } = require('./whatsappService');
 const { 
@@ -27,6 +28,15 @@ const {
 } = require('./dataManager');
 const { getSheetValues, appendSheetValues, initializeSheets } = require('./sheetsService');
 const { getTrainingData, getAIMemory, addMemory, buildEnhancedPrompt } = require('./aiTraining');
+
+// Google Vision API (uncomment when library is available)
+/*
+const vision = require('@google-cloud/vision');
+const visionClient = new vision.ImageAnnotatorClient({
+  keyFilename: process.env.GOOGLE_VISION_KEY_PATH || 'path/to/service-account-key.json',
+  projectId: process.env.GOOGLE_CLOUD_PROJECT_ID || 'your-project-id'
+});
+*/
 
 // WhatsApp webhook endpoint
 app.post('/webhook', async (req, res) => {
@@ -138,36 +148,77 @@ app.post('/webhook', async (req, res) => {
               // Get contact name
               const contactName = contact.name || 'Customer';
               
-              // Create a message indicating image was received with metadata
-              const imageInfo = `[Image received] ID: ${message.image.id}, Type: ${message.image.mime_type}`;
-              
-              // Respond to image with a message
-              const aiResponse = "Thanks for sending that image! I'm an AI assistant and can't process images directly, but I've recorded your image and can help with any questions about our products or services.";
-              
-              // Add image info to contact's chat history
-              await addMessageToContactHistory(from, imageInfo, aiResponse);
-              
-              // Send response back to user
+              // Download the image (prepare for analysis)
               try {
-                await sendWhatsAppMessage(from, aiResponse);
-                console.log(`[INFO] Image response sent to ${contactName}`);
-                console.log(`Response: ${aiResponse}`);
-              } catch (sendError) {
-                console.error(`[ERROR] Failed to send image response to ${contactName}:`, sendError.message);
+                console.log(`[INFO] Downloading image ${message.image.id} for analysis`);
+                // Uncomment when Google Vision API is available
+                /*
+                const media = await downloadMedia(message.image.id);
+                console.log(`[INFO] Image downloaded successfully. Size: ${media.data.length} bytes`);
+                
+                // Analyze image with Google Vision API
+                const [result] = await visionClient.labelDetection(media.data);
+                const labels = result.labelAnnotations;
+                
+                // Extract labels
+                const imageLabels = labels.map(label => label.description).join(', ');
+                console.log(`[INFO] Image labels: ${imageLabels}`);
+                
+                // Create a message with image analysis
+                const imageInfo = `[Image received] ID: ${message.image.id}, Type: ${message.image.mime_type}, Labels: ${imageLabels}`;
+                
+                // Respond to image with analysis
+                const aiResponse = `Thanks for sending that image! I can see this image contains: ${imageLabels}. How can I help you with this?`;
+                */
+                
+                // For now, just record the image metadata
+                const imageInfo = `[Image received] ID: ${message.image.id}, Type: ${message.image.mime_type}`;
+                const aiResponse = "Thanks for sending that image! I'm an AI assistant and can't process images directly, but I've recorded your image and can help with any questions about our products or services.";
+                
+                // Add image info to contact's chat history
+                await addMessageToContactHistory(from, imageInfo, aiResponse);
+                
+                // Send response back to user
+                try {
+                  await sendWhatsAppMessage(from, aiResponse);
+                  console.log(`[INFO] Image response sent to ${contactName}`);
+                  console.log(`Response: ${aiResponse}`);
+                } catch (sendError) {
+                  console.error(`[ERROR] Failed to send image response to ${contactName}:`, sendError.message);
+                }
+                
+                // Notify that AI can't process images
+                console.log(`[HELP REQUEST] AI cannot process image from ${from}. Image ID: ${message.image.id}`);
+                // Send help request to API
+                try {
+                  await axios.post('/api/help-request', {
+                    type: 'image_unsupported',
+                    message: `AI cannot process image. Image ID: ${message.image.id}, Type: ${message.image.mime_type}`,
+                    from: from
+                  });
+                } catch (error) {
+                  console.error('[ERROR] Failed to send help request:', error.message);
+                }
+              } catch (downloadError) {
+                console.error(`[ERROR] Failed to download image ${message.image.id}:`, downloadError.message);
+                
+                // Still record the image metadata even if download fails
+                const imageInfo = `[Image received] ID: ${message.image.id}, Type: ${message.image.mime_type} (Download failed)`;
+                const aiResponse = "Thanks for sending that image! I'm an AI assistant and can't process images directly, but I've recorded your image and can help with any questions about our products or services.";
+                
+                // Add image info to contact's chat history
+                await addMessageToContactHistory(from, imageInfo, aiResponse);
+                
+                // Send response back to user
+                try {
+                  await sendWhatsAppMessage(from, aiResponse);
+                  console.log(`[INFO] Image response sent to ${contactName}`);
+                  console.log(`Response: ${aiResponse}`);
+                } catch (sendError) {
+                  console.error(`[ERROR] Failed to send image response to ${contactName}:`, sendError.message);
+                }
               }
-              
-              // Notify that AI can't process images
-              console.log(`[HELP REQUEST] AI cannot process image from ${from}. Image ID: ${message.image.id}`);
-              // Send help request to API
-              try {
-                await axios.post('/api/help-request', {
-                  type: 'image_unsupported',
-                  message: `AI cannot process image. Image ID: ${message.image.id}, Type: ${message.image.mime_type}`,
-                  from: from
-                });
-              } catch (error) {
-                console.error('[ERROR] Failed to send help request:', error.message);
-              }
+
             } else {
               console.log(`[INFO] Received ${messageType} message from ${from} - not handled yet`);
               
