@@ -111,6 +111,12 @@
             opacity: 0.9;
         }
 
+        .stat-time {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
         .navigation {
             background: white;
             border-radius: 12px;
@@ -323,6 +329,37 @@
                 padding: 20px;
             }
         }
+
+        .refresh-btn-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .refresh-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .refresh-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .refresh-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
     </style>
 </head>
 <body>
@@ -334,21 +371,31 @@
 
         <div class="stats-grid">
             <div class="stat-card primary">
-                <div class="stat-value" id="contactCount">--</div>
-                <div class="stat-label">Total Contacts</div>
+                <div class="stat-value" id="contactCount">0</div>
+                <div class="stat-label">Total Customers</div>
+                <div class="stat-time">Last updated: <span id="lastUpdated">Loading...</span></div>
             </div>
             <div class="stat-card success">
-                <div class="stat-value" id="messageCount">--</div>
+                <div class="stat-value" id="messageCount">0</div>
                 <div class="stat-label">Total Messages</div>
+                <div class="stat-time">Last updated: <span id="lastUpdated2">Loading...</span></div>
             </div>
             <div class="stat-card warning">
-                <div class="stat-value" id="memoryCount">--</div>
-                <div class="stat-label">Memory Items</div>
+                <div class="stat-value" id="memoryCount">0</div>
+                <div class="stat-label">Business Info Items</div>
+                <div class="stat-time">Last updated: <span id="lastUpdated3">Loading...</span></div>
             </div>
             <div class="stat-card danger">
-                <div class="stat-value" id="trainingCount">--</div>
+                <div class="stat-value" id="trainingCount">0</div>
                 <div class="stat-label">Training Examples</div>
+                <div class="stat-time">Last updated: <span id="lastUpdated4">Loading...</span></div>
             </div>
+        </div>
+
+        <div class="refresh-btn-container">
+            <button class="refresh-btn" onclick="loadStats()" id="refreshStatsBtn">
+                <i class="fas fa-sync-alt"></i> Refresh Stats
+            </button>
         </div>
 
         <div class="navigation">
@@ -570,6 +617,13 @@
 
         // Load stats on page load
         async function loadStats() {
+            const refreshBtn = document.getElementById('refreshStatsBtn');
+            const originalText = refreshBtn.innerHTML;
+            
+            // Show loading state
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+            
             try {
                 const response = await fetch('/api/stats');
                 const stats = await response.json();
@@ -578,9 +632,30 @@
                 document.getElementById('messageCount').textContent = stats.totalMessages;
                 document.getElementById('memoryCount').textContent = stats.memoryItems;
                 document.getElementById('trainingCount').textContent = stats.trainingExamples;
+                
+                // Update timestamps
+                const now = new Date().toLocaleString();
+                document.getElementById('lastUpdated').textContent = now;
+                document.getElementById('lastUpdated2').textContent = now;
+                document.getElementById('lastUpdated3').textContent = now;
+                document.getElementById('lastUpdated4').textContent = now;
             } catch (error) {
                 console.error('Error loading stats:', error);
+            } finally {
+                // Restore button state
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = originalText;
             }
+        }
+
+        // Auto-refresh stats every 30 seconds
+        function startStatsAutoRefresh() {
+            setInterval(async () => {
+                // Only auto-refresh if the page is visible to save resources
+                if (!document.hidden) {
+                    await loadStats();
+                }
+            }, 30000); // 30 seconds
         }
 
         // Load business information
@@ -851,13 +926,14 @@
 
         // Update timestamp
         function updateTimestamp() {
-            const now = new Date();
-            document.getElementById('timestamp').textContent = now.toLocaleString();
+            // This function is no longer needed since we have individual timestamps for each stat
+            // Keeping it for backward compatibility
         }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadStats();
+            startStatsAutoRefresh(); // Start auto-refreshing stats
             updateTimestamp();
             setInterval(updateTimestamp, 1000);
             

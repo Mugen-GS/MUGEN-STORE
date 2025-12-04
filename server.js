@@ -238,6 +238,7 @@ app.get('/api/ai-guidelines', async (req, res) => {
 // API: Get system stats
 app.get('/api/stats', async (req, res) => {
   try {
+    console.log('[DEBUG] Loading system stats');
     const training = await getTrainingData();
     const memory = await getAIMemory();
     
@@ -259,12 +260,16 @@ app.get('/api/stats', async (req, res) => {
       }
     }
     
-    res.json({
+    const stats = {
       trainingExamples: training.length,
       memoryItems: memoryCount,
       totalContacts: contactCount,
       totalMessages: totalMessages
-    });
+    };
+    
+    console.log('[DEBUG] Stats result:', stats);
+    
+    res.json(stats);
   } catch (error) {
     console.error('[ERROR] Failed to get stats:', error.message);
     res.status(500).json({ error: error.message });
