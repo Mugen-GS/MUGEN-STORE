@@ -415,6 +415,9 @@
                 <button class="nav-tab" onclick="showTab('notifications')">
                     <i class="fas fa-bell"></i> Notifications
                 </button>
+                <button class="nav-tab" onclick="window.location.href='/live-data.html'">
+                    <i class="fas fa-database"></i> Live Data
+                </button>
             </div>
 
             <div class="tab-content active" id="overview-tab">
@@ -432,6 +435,27 @@
                             <li style="margin-bottom: 8px;">Test your AI regularly to ensure it's performing as expected</li>
                             <li style="margin-bottom: 8px;"><a href="/live-data.html" style="color: var(--primary); text-decoration: none;"><i class="fas fa-external-link-alt"></i> View Live Data</a> - See real-time contact information and chat history</li>
                         </ul>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 20px; background: var(--light); border-radius: 8px;">
+                        <h3><i class="fas fa-link"></i> Quick Links</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px;">
+                            <a href="#business-tab" onclick="showTab('business')" style="display: block; padding: 12px 20px; background: white; border-radius: 8px; text-decoration: none; color: var(--dark); box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+                                <i class="fas fa-building"></i> Business Info
+                            </a>
+                            <a href="#guidelines-tab" onclick="showTab('guidelines')" style="display: block; padding: 12px 20px; background: white; border-radius: 8px; text-decoration: none; color: var(--dark); box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+                                <i class="fas fa-robot"></i> AI Guidelines
+                            </a>
+                            <a href="#testing-tab" onclick="showTab('testing')" style="display: block; padding: 12px 20px; background: white; border-radius: 8px; text-decoration: none; color: var(--dark); box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+                                <i class="fas fa-vial"></i> AI Testing
+                            </a>
+                            <a href="#notifications-tab" onclick="showTab('notifications')" style="display: block; padding: 12px 20px; background: white; border-radius: 8px; text-decoration: none; color: var(--dark); box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+                                <i class="fas fa-bell"></i> Notifications
+                            </a>
+                            <a href="/live-data.html" style="display: block; padding: 12px 20px; background: white; border-radius: 8px; text-decoration: none; color: var(--dark); box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+                                <i class="fas fa-database"></i> Live Data
+                            </a>
+                        </div>
                     </div>
                     
                     <!-- Image and AI Information Section -->
@@ -482,6 +506,41 @@ GOOGLE_CLOUD_PROJECT_ID=your_project_id_here</pre>
                                 </li>
                                 <li>Uncomment the Google Vision API code in your server.js file</li>
                                 <li>Restart your server</li>
+                            </ol>
+
+                            <p><strong>How to Enable Image Recognition on Render.com:</strong></p>
+                            <p>To enable AI to read and understand images on your Render.com deployment, follow these steps:</p>
+                            <ol style="padding-left: 20px;">
+                                <li>Create a Google Cloud Platform project at <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
+                                <li>Enable the Vision API in your project:
+                                    <ul style="padding-left: 20px; margin-top: 5px;">
+                                        <li>Go to "APIs & Services" > "Library"</li>
+                                        <li>Search for "Cloud Vision API"</li>
+                                        <li>Click "Enable"</li>
+                                    </ul>
+                                </li>
+                                <li>Generate an API key:
+                                    <ul style="padding-left: 20px; margin-top: 5px;">
+                                        <li>Go to "APIs & Services" > "Credentials"</li>
+                                        <li>Click "Create Credentials" > "API Key"</li>
+                                        <li>Copy the generated key</li>
+                                    </ul>
+                                </li>
+                                <li>Add the API key as an environment variable in your Render.com dashboard:
+                                    <ul style="padding-left: 20px; margin-top: 5px;">
+                                        <li>Go to your Render.com dashboard</li>
+                                        <li>Select your WhatsApp Gemini Bot service</li>
+                                        <li>Go to "Environment Variables" section</li>
+                                        <li>Add these variables:
+                                            <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0;">
+GOOGLE_VISION_API_KEY=your_generated_api_key_here
+GOOGLE_CLOUD_PROJECT_ID=your_project_id_here</pre>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>The @google-cloud/vision dependency is already included in package.json and will be automatically installed by Render when you deploy</li>
+                                <li>Deploy your updated code to Render.com (the Google Vision API code is already prepared and commented out)</li>
+                                <li>Uncomment the Google Vision API code sections in server.js after deployment if needed</li>
                             </ol>
 
                             <p><strong>Other Future possibilities:</strong></p>
