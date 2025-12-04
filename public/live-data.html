@@ -7,16 +7,19 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #667eea;
-            --secondary: #764ba2;
-            --accent: #11998e;
-            --light: #f8f9fa;
-            --dark: #343a40;
-            --success: #28a745;
-            --warning: #ffc107;
-            --danger: #dc3545;
-            --gray: #6c757d;
-            --light-gray: #e9ecef;
+            --whatsapp-green: #128C7E;
+            --whatsapp-light-green: #25D366;
+            --whatsapp-blue: #34B7F1;
+            --whatsapp-dark: #075E54;
+            --whatsapp-light: #ECE5DD;
+            --whatsapp-chat-bg: #DCf8C6;
+            --whatsapp-header: #128C7E;
+            --whatsapp-sidebar: #FFFFFF;
+            --whatsapp-conversation: #FFFFFF;
+            --whatsapp-text: #3B4A54;
+            --whatsapp-text-light: #667781;
+            --whatsapp-border: #E9EDEF;
+            --whatsapp-input-bg: #F0F2F5;
         }
 
         * {
@@ -26,38 +29,171 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+            background-color: var(--whatsapp-light);
+            color: var(--whatsapp-text);
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .container {
-            max-width: 1200px;
+        .app-container {
+            display: flex;
+            height: 100vh;
+            max-width: 1600px;
             margin: 0 auto;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
 
-        .header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        /* Sidebar Styles */
+        .sidebar {
+            width: 30%;
+            min-width: 300px;
+            background-color: var(--whatsapp-sidebar);
+            border-right: 1px solid var(--whatsapp-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            background-color: var(--whatsapp-header);
             color: white;
-            padding: 30px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--whatsapp-border);
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-decoration: none;
+            color: var(--whatsapp-text);
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background-color: var(--whatsapp-input-bg);
+        }
+
+        .nav-item.active {
+            background-color: var(--whatsapp-input-bg);
+            color: var(--whatsapp-green);
+        }
+
+        .nav-item i {
+            font-size: 20px;
+            width: 24px;
             text-align: center;
         }
 
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--whatsapp-conversation);
+            position: relative;
         }
 
-        .controls {
+        .content-header {
+            background-color: var(--whatsapp-header);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content-header h2 {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .back-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 8px 16px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .content-body {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .section {
             background: white;
             border-radius: 12px;
             padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--whatsapp-border);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--whatsapp-border);
+        }
+
+        .section-header h2 {
+            color: var(--whatsapp-dark);
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .refresh-btn {
+            background: var(--whatsapp-green);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: var(--whatsapp-dark);
+            transform: translateY(-2px);
         }
 
         .form-group {
@@ -68,111 +204,63 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: var(--dark);
+            color: var(--whatsapp-text);
         }
 
-        .form-group input {
+        .form-control {
             width: 100%;
-            padding: 12px;
-            border: 2px solid var(--light-gray);
+            padding: 12px 15px;
+            border: 2px solid var(--whatsapp-border);
             border-radius: 8px;
             font-size: 1rem;
             transition: border-color 0.3s ease;
+            background-color: var(--whatsapp-input-bg);
         }
 
-        .form-group input:focus {
+        .form-control:focus {
             outline: none;
-            border-color: var(--primary);
+            border-color: var(--whatsapp-green);
+            box-shadow: 0 0 0 3px rgba(18, 140, 126, 0.1);
         }
 
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--secondary);
-            transform: translateY(-2px);
-        }
-
-        .data-section {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .section-header h2 {
-            color: var(--dark);
-            font-size: 1.5rem;
-        }
-
-        .refresh-btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .refresh-btn:hover {
-            background: #0d8b80;
-        }
-
-        .contact-info {
+        .contact-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
-            margin-bottom: 30px;
         }
 
-        .info-card {
-            background: var(--light);
-            border-radius: 10px;
+        .contact-card {
+            background: var(--whatsapp-input-bg);
+            border-radius: 8px;
             padding: 20px;
-            border-left: 4px solid var(--primary);
+            border-left: 4px solid var(--whatsapp-green);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
         }
 
-        .info-card h3 {
-            color: var(--dark);
-            margin-bottom: 15px;
+        .contact-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .contact-card h3 {
+            color: var(--whatsapp-dark);
+            margin-bottom: 10px;
             font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .info-item {
+        .contact-info-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--light-gray);
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--whatsapp-border);
         }
 
-        .info-item:last-child {
+        .contact-info-item:last-child {
             border-bottom: none;
             margin-bottom: 0;
             padding-bottom: 0;
@@ -180,290 +268,436 @@
 
         .info-label {
             font-weight: 600;
-            color: var(--gray);
+            color: var(--whatsapp-text);
         }
 
         .info-value {
-            color: var(--dark);
+            color: var(--whatsapp-text-light);
+            text-align: right;
         }
 
-        .chat-history {
+        .chat-container {
+            background: var(--whatsapp-input-bg);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
             max-height: 400px;
             overflow-y: auto;
-            border: 1px solid var(--light-gray);
-            border-radius: 10px;
-            padding: 20px;
         }
 
         .message {
             margin-bottom: 15px;
-            padding: 15px;
-            border-radius: 10px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            max-width: 80%;
         }
 
-        .message.customer {
-            background: var(--light);
-            border-left: 4px solid var(--primary);
+        .user-message {
+            background: var(--whatsapp-light-green);
+            color: white;
+            margin-left: auto;
+            text-align: right;
         }
 
-        .message.ai {
-            background: #e3f2fd;
-            border-left: 4px solid var(--accent);
+        .ai-message {
+            background: var(--whatsapp-chat-bg);
+            color: var(--whatsapp-text);
+            margin-right: auto;
+        }
+
+        .image-message {
+            background: var(--whatsapp-blue);
+            color: white;
+            margin-left: auto;
+            text-align: right;
         }
 
         .message-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
+            font-weight: 600;
+            margin-bottom: 5px;
             font-size: 0.9rem;
-            color: var(--gray);
         }
 
         .message-content {
-            line-height: 1.5;
+            line-height: 1.4;
         }
 
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: var(--gray);
+        .message-timestamp {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 5px;
         }
 
-        .error {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
+        .notification {
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
+        .notification.success {
+            background-color: rgba(40, 167, 69, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .notification.error {
+            background-color: rgba(220, 53, 69, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
-            .container {
-                padding: 10px;
+            .app-container {
+                flex-direction: column;
             }
             
-            .header {
-                padding: 20px;
+            .sidebar {
+                width: 100%;
+                min-width: auto;
             }
             
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .contact-info {
+            .contact-grid {
                 grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1><i class="fas fa-database"></i> Live Data Viewer</h1>
-            <p>View real-time contact information and chat history</p>
-            <div style="margin-top: 15px;">
-                <a href="/" class="btn btn-primary" style="text-decoration: none;">
-                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="fas fa-robot"></i> MUGEN AI Dashboard</h1>
+            </div>
+            
+            <div class="sidebar-nav">
+                <a href="/" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/business-info" class="nav-item">
+                    <i class="fas fa-building"></i>
+                    <span>Business Information</span>
+                </a>
+                <a href="/ai-guidelines" class="nav-item">
+                    <i class="fas fa-book"></i>
+                    <span>AI Guidelines</span>
+                </a>
+                <a href="/ai-testing" class="nav-item">
+                    <i class="fas fa-flask"></i>
+                    <span>AI Testing</span>
+                </a>
+                <a href="/live-data" class="nav-item active">
+                    <i class="fas fa-database"></i>
+                    <span>Live Data Viewer</span>
                 </a>
             </div>
         </div>
-
-        <div class="controls">
-            <div class="form-group">
-                <label for="phoneNumber"><i class="fas fa-phone"></i> Phone Number</label>
-                <input type="tel" id="phoneNumber" placeholder="Enter phone number (e.g., +1234567890)" value="+1234567890">
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-header">
+                <h2><i class="fas fa-database"></i> Live Data Viewer</h2>
+                <a href="/" class="back-button">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
             </div>
-            <button class="btn btn-primary" onclick="loadData()">
-                <i class="fas fa-search"></i> Load Data
-            </button>
-        </div>
-
-        <div id="errorContainer"></div>
-
-        <div class="data-section">
-            <div class="section-header">
-                <h2><i class="fas fa-user"></i> Contact Information</h2>
-                <button class="refresh-btn" onclick="loadData()">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-            </div>
-            <div id="contactInfo" class="contact-info">
-                <div class="loading">Enter a phone number and click "Load Data" to view contact information</div>
-            </div>
-        </div>
-
-        <div class="data-section">
-            <div class="section-header">
-                <h2><i class="fas fa-comments"></i> Chat History</h2>
-                <button class="refresh-btn" onclick="loadData()">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-            </div>
-            <div id="chatHistory" class="chat-history">
-                <div class="loading">Enter a phone number and click "Load Data" to view chat history</div>
+            
+            <div class="content-body">
+                <div class="section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-search"></i> View Contact Data</h2>
+                    </div>
+                    
+                    <div id="notification" class="notification hidden">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="notification-message"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone-number">Phone Number</label>
+                        <input type="text" id="phone-number" class="form-control" placeholder="Enter phone number to view contact data (e.g., +1234567890)">
+                    </div>
+                    
+                    <button id="load-contact-btn" class="refresh-btn">
+                        <i class="fas fa-user"></i> Load Contact Data
+                    </button>
+                </div>
+                
+                <div class="section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-users"></i> Recent Contacts</h2>
+                        <button id="refresh-contacts-btn" class="refresh-btn">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    
+                    <div class="contact-grid" id="contacts-container">
+                        <div class="contact-card">
+                            <h3><i class="fas fa-user"></i> Loading...</h3>
+                            <p>Please wait while we load contact data.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-comments"></i> Chat History</h2>
+                    </div>
+                    
+                    <div class="chat-container" id="chat-container">
+                        <div class="message ai-message">
+                            <div class="message-header">AI Assistant</div>
+                            <div class="message-content">Select a contact to view their chat history.</div>
+                            <div class="message-timestamp">Just now</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        async function loadData() {
-            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+        // Load contact data button handler
+        document.getElementById('load-contact-btn').addEventListener('click', async function() {
+            const phoneNumber = document.getElementById('phone-number').value;
+            
             if (!phoneNumber) {
-                showError('Please enter a phone number');
+                showNotification('Please enter a phone number', 'error');
                 return;
             }
-
-            // Clear previous error
-            document.getElementById('errorContainer').innerHTML = '';
-
+            
+            loadContactData(phoneNumber);
+        });
+        
+        // Refresh contacts button handler
+        document.getElementById('refresh-contacts-btn').addEventListener('click', function() {
+            loadContacts();
+        });
+        
+        // Load contact data
+        async function loadContactData(phoneNumber) {
             try {
-                // Show loading state
-                document.getElementById('contactInfo').innerHTML = '<div class="loading">Loading contact information...</div>';
-                document.getElementById('chatHistory').innerHTML = '<div class="loading">Loading chat history...</div>';
-
-                // Load contact info
-                const contactResponse = await fetch(`/api/contact-info?phone=${encodeURIComponent(phoneNumber)}`);
-                if (!contactResponse.ok) {
-                    throw new Error(`HTTP error! status: ${contactResponse.status}`);
+                const response = await fetch(`/api/contact/${phoneNumber}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displayContactData(data);
+                    loadChatHistory(phoneNumber);
+                } else {
+                    showNotification('Contact not found', 'error');
                 }
-                const contactData = await contactResponse.json();
-
-                if (contactData.error) {
-                    throw new Error(contactData.error);
-                }
-
-                displayContactInfo(contactData);
-
-                // Load chat history
-                const historyResponse = await fetch(`/api/test-history?phone=${encodeURIComponent(phoneNumber)}`);
-                if (!historyResponse.ok) {
-                    throw new Error(`HTTP error! status: ${historyResponse.status}`);
-                }
-                const historyData = await historyResponse.json();
-
-                if (historyData.error) {
-                    throw new Error(historyData.error);
-                }
-
-                displayChatHistory(historyData.history);
-
             } catch (error) {
-                console.error('Error loading data:', error);
-                showError(`Error loading data: ${error.message}`);
-                document.getElementById('contactInfo').innerHTML = '<div class="loading">Enter a phone number and click "Load Data" to view contact information</div>';
-                document.getElementById('chatHistory').innerHTML = '<div class="loading">Enter a phone number and click "Load Data" to view chat history</div>';
+                console.error('Error loading contact data:', error);
+                showNotification('Failed to load contact data. Please try again.', 'error');
             }
         }
-
-        function displayContactInfo(contact) {
-            if (!contact) {
-                document.getElementById('contactInfo').innerHTML = '<div class="loading">No contact found for this phone number</div>';
+        
+        // Display contact data
+        function displayContactData(data) {
+            const container = document.getElementById('contacts-container');
+            
+            if (!data) {
+                container.innerHTML = `
+                    <div class="contact-card">
+                        <h3><i class="fas fa-user"></i> No Contact Data</h3>
+                        <p>Contact data not available.</p>
+                    </div>
+                `;
                 return;
             }
-
-            const contactInfoHTML = `
-                <div class="info-card">
-                    <h3><i class="fas fa-id-card"></i> Basic Information</h3>
-                    <div class="info-item">
-                        <span class="info-label">Phone Number:</span>
-                        <span class="info-value">${contact.phoneNumber || 'N/A'}</span>
+            
+            const lastInteraction = data.lastInteraction ? new Date(data.lastInteraction).toLocaleString() : 'Never';
+            
+            container.innerHTML = `
+                <div class="contact-card" onclick="loadChatHistory('${data.phone}')">
+                    <h3><i class="fas fa-user"></i> ${data.name || 'Unnamed Contact'}</h3>
+                    <div class="contact-info-item">
+                        <span class="info-label">Phone:</span>
+                        <span class="info-value">${data.phone}</span>
                     </div>
-                    <div class="info-item">
-                        <span class="info-label">Name:</span>
-                        <span class="info-value">${contact.name || 'Unknown'}</span>
+                    <div class="contact-info-item">
+                        <span class="info-label">Messages:</span>
+                        <span class="info-value">${data.messageCount || 0}</span>
                     </div>
-                    <div class="info-item">
-                        <span class="info-label">Lead Status:</span>
-                        <span class="info-value">${contact.leadStatus || 'N/A'}</span>
-                    </div>
-                </div>
-                <div class="info-card">
-                    <h3><i class="fas fa-calendar"></i> Activity</h3>
-                    <div class="info-item">
-                        <span class="info-label">First Contact:</span>
-                        <span class="info-value">${contact.firstContactDate ? new Date(contact.firstContactDate).toLocaleString() : 'N/A'}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Last Contact:</span>
-                        <span class="info-value">${contact.lastContactDate ? new Date(contact.lastContactDate).toLocaleString() : 'N/A'}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Total Messages:</span>
-                        <span class="info-value">${contact.messageCount || 0}</span>
+                    <div class="contact-info-item">
+                        <span class="info-label">Last Interaction:</span>
+                        <span class="info-value">${lastInteraction}</span>
                     </div>
                 </div>
             `;
-
-            document.getElementById('contactInfo').innerHTML = contactInfoHTML;
         }
-
-        function displayChatHistory(history) {
-            if (!history || history.length === 0) {
-                document.getElementById('chatHistory').innerHTML = '<div class="loading">No chat history found for this contact</div>';
+        
+        // Load chat history
+        async function loadChatHistory(phoneNumber) {
+            try {
+                const response = await fetch(`/api/contact-history/${phoneNumber}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displayChatHistory(data);
+                } else {
+                    showNotification('Chat history not found', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+                showNotification('Failed to load chat history. Please try again.', 'error');
+            }
+        }
+        
+        // Display chat history
+        function displayChatHistory(data) {
+            const chatContainer = document.getElementById('chat-container');
+            
+            if (!data || !data.chatHistory || data.chatHistory.length === 0) {
+                chatContainer.innerHTML = `
+                    <div class="message ai-message">
+                        <div class="message-header">AI Assistant</div>
+                        <div class="message-content">No chat history available for this contact.</div>
+                        <div class="message-timestamp">Just now</div>
+                    </div>
+                `;
                 return;
             }
-
-            let historyHTML = '';
-            history.forEach(msg => {
-                const isCustomer = msg.role === 'user';
-                const timestamp = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : 'Unknown time';
+            
+            chatContainer.innerHTML = '';
+            
+            data.chatHistory.forEach(msg => {
+                if (msg.user) {
+                    // Check if it's an image message
+                    if (msg.user.startsWith('[Image received]')) {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'message image-message';
+                        messageDiv.innerHTML = `
+                            <div class="message-header">User (Image)</div>
+                            <div class="message-content">${msg.user}</div>
+                            <div class="message-timestamp">${formatTimestamp(msg.timestamp)}</div>
+                        `;
+                        chatContainer.appendChild(messageDiv);
+                    } else {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'message user-message';
+                        messageDiv.innerHTML = `
+                            <div class="message-header">User</div>
+                            <div class="message-content">${msg.user}</div>
+                            <div class="message-timestamp">${formatTimestamp(msg.timestamp)}</div>
+                        `;
+                        chatContainer.appendChild(messageDiv);
+                    }
+                }
                 
-                // Check if this is an image message
-                const isImageMessage = msg.message && msg.message.includes('[Image received]');
-                
-                if (isImageMessage) {
-                    // Extract image metadata
-                    const imageIdMatch = msg.message.match(/ID: ([^,]+)/);
-                    const imageTypeMatch = msg.message.match(/Type: (.+)/);
-                    const imageId = imageIdMatch ? imageIdMatch[1] : 'Unknown';
-                    const imageType = imageTypeMatch ? imageTypeMatch[1] : 'Unknown';
-                    
-                    historyHTML += `
-                        <div class="message ${isCustomer ? 'customer' : 'ai'}">
-                            <div class="message-header">
-                                <strong>${isCustomer ? 'Customer' : 'AI Assistant'}</strong>
-                                <span>${timestamp}</span>
-                            </div>
-                            <div class="message-content">
-                                <i class="fas fa-image"></i> <strong>Image received</strong>
-                                <div style="margin-top: 8px; font-size: 0.9em;">
-                                    <div><strong>ID:</strong> ${imageId}</div>
-                                    <div><strong>Type:</strong> ${imageType}</div>
-                                </div>
-                            </div>
-                        </div>
+                if (msg.ai) {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message ai-message';
+                    messageDiv.innerHTML = `
+                        <div class="message-header">AI Assistant</div>
+                        <div class="message-content">${msg.ai}</div>
+                        <div class="message-timestamp">${formatTimestamp(msg.timestamp)}</div>
                     `;
-                } else {
-                    historyHTML += `
-                        <div class="message ${isCustomer ? 'customer' : 'ai'}">
-                            <div class="message-header">
-                                <strong>${isCustomer ? 'Customer' : 'AI Assistant'}</strong>
-                                <span>${timestamp}</span>
-                            </div>
-                            <div class="message-content">
-                                ${msg.message || 'No message content'}
-                            </div>
-                        </div>
-                    `;
+                    chatContainer.appendChild(messageDiv);
                 }
             });
-
-            document.getElementById('chatHistory').innerHTML = historyHTML;
+            
+            // Scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
-
-        function showError(message) {
-            const errorHTML = `
-                <div class="error">
-                    <i class="fas fa-exclamation-circle"></i> ${message}
-                </div>
-            `;
-            document.getElementById('errorContainer').innerHTML = errorHTML;
+        
+        // Format timestamp
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'Unknown time';
+            return new Date(timestamp).toLocaleString();
         }
-
-        // Auto-load data for default phone number on page load
-        window.addEventListener('DOMContentLoaded', function() {
-            setTimeout(loadData, 1000);
+        
+        // Load contacts
+        async function loadContacts() {
+            try {
+                const response = await fetch('/api/contacts');
+                if (response.ok) {
+                    const data = await response.json();
+                    displayContacts(data);
+                } else {
+                    document.getElementById('contacts-container').innerHTML = `
+                        <div class="contact-card">
+                            <h3><i class="fas fa-exclamation-circle"></i> No Contacts</h3>
+                            <p>No contacts found in the system.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading contacts:', error);
+                document.getElementById('contacts-container').innerHTML = `
+                    <div class="contact-card">
+                        <h3><i class="fas fa-exclamation-circle"></i> Error Loading</h3>
+                        <p>Failed to load contacts. Please try again later.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Display contacts
+        function displayContacts(data) {
+            const container = document.getElementById('contacts-container');
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = `
+                    <div class="contact-card">
+                        <h3><i class="fas fa-exclamation-circle"></i> No Contacts</h3>
+                        <p>No contacts found in the system.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            data.slice(0, 6).forEach(contact => {
+                const lastInteraction = contact.lastInteraction ? new Date(contact.lastInteraction).toLocaleString() : 'Never';
+                
+                html += `
+                    <div class="contact-card" onclick="loadContactData('${contact.phone}')">
+                        <h3><i class="fas fa-user"></i> ${contact.name || 'Unnamed Contact'}</h3>
+                        <div class="contact-info-item">
+                            <span class="info-label">Phone:</span>
+                            <span class="info-value">${contact.phone}</span>
+                        </div>
+                        <div class="contact-info-item">
+                            <span class="info-label">Messages:</span>
+                            <span class="info-value">${contact.messageCount || 0}</span>
+                        </div>
+                        <div class="contact-info-item">
+                            <span class="info-label">Last Interaction:</span>
+                            <span class="info-value">${lastInteraction}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            const messageElement = document.getElementById('notification-message');
+            
+            messageElement.textContent = message;
+            notification.className = `notification ${type}`;
+            
+            // Hide notification after 5 seconds
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 5000);
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadContacts();
         });
     </script>
 </body>

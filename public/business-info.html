@@ -7,16 +7,19 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #667eea;
-            --secondary: #764ba2;
-            --accent: #11998e;
-            --light: #f8f9fa;
-            --dark: #343a40;
-            --success: #28a745;
-            --warning: #ffc107;
-            --danger: #dc3545;
-            --gray: #6c757d;
-            --light-gray: #e9ecef;
+            --whatsapp-green: #128C7E;
+            --whatsapp-light-green: #25D366;
+            --whatsapp-blue: #34B7F1;
+            --whatsapp-dark: #075E54;
+            --whatsapp-light: #ECE5DD;
+            --whatsapp-chat-bg: #DCf8C6;
+            --whatsapp-header: #128C7E;
+            --whatsapp-sidebar: #FFFFFF;
+            --whatsapp-conversation: #FFFFFF;
+            --whatsapp-text: #3B4A54;
+            --whatsapp-text-light: #667781;
+            --whatsapp-border: #E9EDEF;
+            --whatsapp-input-bg: #F0F2F5;
         }
 
         * {
@@ -26,79 +29,126 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+            background-color: var(--whatsapp-light);
+            color: var(--whatsapp-text);
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .container {
-            max-width: 1200px;
+        .app-container {
+            display: flex;
+            height: 100vh;
+            max-width: 1600px;
             margin: 0 auto;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
 
-        .header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        /* Sidebar Styles */
+        .sidebar {
+            width: 30%;
+            min-width: 300px;
+            background-color: var(--whatsapp-sidebar);
+            border-right: 1px solid var(--whatsapp-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            background-color: var(--whatsapp-header);
             color: white;
-            padding: 30px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--whatsapp-border);
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-decoration: none;
+            color: var(--whatsapp-text);
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background-color: var(--whatsapp-input-bg);
+        }
+
+        .nav-item.active {
+            background-color: var(--whatsapp-input-bg);
+            color: var(--whatsapp-green);
+        }
+
+        .nav-item i {
+            font-size: 20px;
+            width: 24px;
             text-align: center;
         }
 
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--whatsapp-conversation);
+            position: relative;
         }
 
-        .breadcrumb {
+        .content-header {
+            background-color: var(--whatsapp-header);
+            color: white;
+            padding: 15px 20px;
             display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
+            justify-content: space-between;
             align-items: center;
         }
 
-        .breadcrumb a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
+        .content-header h2 {
+            font-size: 18px;
+            font-weight: 500;
         }
 
-        .breadcrumb a:hover {
-            text-decoration: underline;
-        }
-
-        .nav-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-        }
-
-        .nav-tab {
-            padding: 12px 24px;
-            background: white;
-            border: none;
-            border-radius: 25px;
+        .back-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 8px 16px;
+            color: white;
             cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            font-size: 14px;
+            text-decoration: none;
             display: flex;
             align-items: center;
             gap: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.2s;
         }
 
-        .nav-tab:hover {
-            background: var(--primary);
-            color: white;
-            transform: translateY(-2px);
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
 
-        .nav-tab.active {
-            background: var(--primary);
-            color: white;
+        .content-body {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
         }
 
         .section {
@@ -106,7 +156,8 @@
             border-radius: 12px;
             padding: 25px;
             margin-bottom: 25px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--whatsapp-border);
         }
 
         .section-header {
@@ -114,11 +165,16 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--whatsapp-border);
         }
 
         .section-header h2 {
-            color: var(--dark);
+            color: var(--whatsapp-dark);
             font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .btn {
@@ -134,22 +190,12 @@
         }
 
         .btn-primary {
-            background: var(--primary);
+            background: var(--whatsapp-green);
             color: white;
         }
 
         .btn-primary:hover {
-            background: #5a6fd8;
-            transform: translateY(-2px);
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #218838;
+            background: var(--whatsapp-dark);
             transform: translateY(-2px);
         }
 
@@ -161,22 +207,23 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: var(--dark);
+            color: var(--whatsapp-text);
         }
 
         .form-control {
             width: 100%;
             padding: 12px 15px;
-            border: 2px solid var(--light-gray);
+            border: 2px solid var(--whatsapp-border);
             border-radius: 8px;
             font-size: 1rem;
             transition: border-color 0.3s ease;
+            background-color: var(--whatsapp-input-bg);
         }
 
         .form-control:focus {
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: var(--whatsapp-green);
+            box-shadow: 0 0 0 3px rgba(18, 140, 126, 0.1);
         }
 
         textarea.form-control {
@@ -191,229 +238,344 @@
         }
 
         .memory-item {
-            background: var(--light);
+            background: var(--whatsapp-input-bg);
             border-radius: 8px;
             padding: 20px;
-            border-left: 4px solid var(--primary);
+            border-left: 4px solid var(--whatsapp-green);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .memory-item:hover {
-            transform: translateY(-3px);
+            transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
-        .memory-category {
-            font-weight: 700;
-            color: var(--primary);
+        .memory-item h3 {
+            color: var(--whatsapp-dark);
             margin-bottom: 10px;
-            text-transform: uppercase;
-            font-size: 0.9rem;
+            font-size: 1.2rem;
         }
 
-        .memory-key {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--dark);
-        }
-
-        .memory-value {
-            color: var(--gray);
+        .memory-item p {
+            color: var(--whatsapp-text-light);
             line-height: 1.5;
-        }
-
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: var(--gray);
             font-size: 0.9rem;
         }
 
+        .notification {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification.success {
+            background-color: rgba(40, 167, 69, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .notification.error {
+            background-color: rgba(220, 53, 69, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
+            .app-container {
+                flex-direction: column;
             }
             
-            .nav-tabs {
-                flex-direction: column;
+            .sidebar {
+                width: 100%;
+                min-width: auto;
+            }
+            
+            .memory-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="breadcrumb">
-            <a href="/"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
-        </div>
-
-        <div class="header">
-            <h1><i class="fas fa-building"></i> Business Information</h1>
-            <p>Manage the knowledge base that powers your AI assistant</p>
-        </div>
-
-        <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showTab('manage')">
-                <i class="fas fa-edit"></i> Add/Edit Information
-            </button>
-            <button class="nav-tab" onclick="showTab('view')">
-                <i class="fas fa-eye"></i> View All Information
-            </button>
-        </div>
-
-        <div id="manage-tab" class="tab-content">
-            <div class="section">
-                <div class="section-header">
-                    <h2><i class="fas fa-plus-circle"></i> Add Business Information</h2>
-                </div>
-                
-                <div class="form-group">
-                    <label for="category">Category</label>
-                    <select class="form-control" id="category">
-                        <option value="products">Products</option>
-                        <option value="pricing">Pricing</option>
-                        <option value="shipping">Shipping/Delivery</option>
-                        <option value="faq">FAQ</option>
-                        <option value="policies">Policies</option>
-                        <option value="general">General Info</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="key">Topic/Question</label>
-                    <input type="text" class="form-control" id="key" placeholder="e.g., 'RTX 4060 price' or 'delivery time'">
-                </div>
-                
-                <div class="form-group">
-                    <label for="value">Answer/Information</label>
-                    <textarea class="form-control" id="value" placeholder="e.g., '₦450,000' or '2-3 days in Lagos, 5-7 days nationwide'"></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="notes">Notes (optional)</label>
-                    <input type="text" class="form-control" id="notes" placeholder="Internal notes...">
-                </div>
-                
-                <button class="btn btn-success" onclick="addBusinessInfo()">
-                    <i class="fas fa-save"></i> Save Information
-                </button>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="fas fa-robot"></i> MUGEN AI Dashboard</h1>
+            </div>
+            
+            <div class="sidebar-nav">
+                <a href="/" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/business-info" class="nav-item active">
+                    <i class="fas fa-building"></i>
+                    <span>Business Information</span>
+                </a>
+                <a href="/ai-guidelines" class="nav-item">
+                    <i class="fas fa-book"></i>
+                    <span>AI Guidelines</span>
+                </a>
+                <a href="/ai-testing" class="nav-item">
+                    <i class="fas fa-flask"></i>
+                    <span>AI Testing</span>
+                </a>
+                <a href="/live-data" class="nav-item">
+                    <i class="fas fa-database"></i>
+                    <span>Live Data Viewer</span>
+                </a>
             </div>
         </div>
-
-        <div id="view-tab" class="tab-content" style="display: none;">
-            <div class="section">
-                <div class="section-header">
-                    <h2><i class="fas fa-database"></i> All Business Information</h2>
-                    <button class="btn btn-primary" onclick="loadBusinessInfo()">
-                        <i class="fas fa-sync"></i> Refresh
-                    </button>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-header">
+                <h2><i class="fas fa-building"></i> Business Information</h2>
+                <a href="/" class="back-button">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+            
+            <div class="content-body">
+                <div class="section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-info-circle"></i> Company Details</h2>
+                    </div>
+                    
+                    <div id="notification" class="notification hidden">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="notification-message"></span>
+                    </div>
+                    
+                    <form id="business-form">
+                        <div class="form-group">
+                            <label for="company-name">Company Name</label>
+                            <input type="text" id="company-name" class="form-control" placeholder="Enter your company name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="industry">Industry</label>
+                            <input type="text" id="industry" class="form-control" placeholder="e.g., Gaming, Electronics, Retail">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="products-services">Products & Services</label>
+                            <textarea id="products-services" class="form-control" placeholder="List your main products and services that customers inquire about"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="target-audience">Target Audience</label>
+                            <textarea id="target-audience" class="form-control" placeholder="Describe your typical customers and their characteristics"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="unique-selling-points">Unique Selling Points</label>
+                            <textarea id="unique-selling-points" class="form-control" placeholder="What makes your business stand out from competitors?"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tone-of-voice">Preferred Tone of Voice</label>
+                            <input type="text" id="tone-of-voice" class="form-control" placeholder="e.g., Friendly, Professional, Enthusiastic">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Business Information
+                        </button>
+                    </form>
                 </div>
                 
-                <div id="business-memory-display">
-                    <p style="text-align: center; color: var(--gray); padding: 40px;">
-                        <i class="fas fa-spinner fa-spin"></i> Loading business information...
-                    </p>
+                <div class="section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-lightbulb"></i> Current Business Information</h2>
+                    </div>
+                    
+                    <div class="memory-grid" id="business-memory">
+                        <div class="memory-item">
+                            <h3>Loading...</h3>
+                            <p>Please wait while we load your business information.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <div class="footer">
-            <p>Business Information Manager | MUGEN AI System</p>
         </div>
     </div>
 
     <script>
-        // Tab switching functionality
-        function showTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.style.display = 'none';
-            });
+        // Form submission handler
+        document.getElementById('business-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            // Remove active class from all nav tabs
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Show selected tab
-            document.getElementById(`${tabName}-tab`).style.display = 'block';
-            
-            // Add active class to clicked nav tab
-            event.target.classList.add('active');
-            
-            // Load data if viewing
-            if (tabName === 'view') {
-                loadBusinessInfo();
-            }
-        }
-
-        // Add business information
-        async function addBusinessInfo() {
-            const category = document.getElementById('category').value;
-            const key = document.getElementById('key').value;
-            const value = document.getElementById('value').value;
-            const notes = document.getElementById('notes').value;
-            
-            if (!key || !value) {
-                alert('Please fill in both Topic/Question and Answer/Information fields');
-                return;
-            }
+            const formData = {
+                companyName: document.getElementById('company-name').value,
+                industry: document.getElementById('industry').value,
+                productsServices: document.getElementById('products-services').value,
+                targetAudience: document.getElementById('target-audience').value,
+                uniqueSellingPoints: document.getElementById('unique-selling-points').value,
+                toneOfVoice: document.getElementById('tone-of-voice').value
+            };
             
             try {
                 const response = await fetch('/api/business-info', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ category, key, value, notes })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
                 });
                 
                 if (response.ok) {
-                    // Reset form
-                    document.getElementById('key').value = '';
-                    document.getElementById('value').value = '';
-                    document.getElementById('notes').value = '';
-                    
-                    alert('Business information saved successfully!');
+                    showNotification('Business information saved successfully!', 'success');
+                    loadBusinessInfo();
                 } else {
-                    throw new Error('Failed to save');
+                    showNotification('Failed to save business information. Please try again.', 'error');
                 }
             } catch (error) {
                 console.error('Error saving business info:', error);
-                alert('Error saving business information');
+                showNotification('An error occurred. Please try again.', 'error');
             }
+        });
+        
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            const messageElement = document.getElementById('notification-message');
+            
+            messageElement.textContent = message;
+            notification.className = `notification ${type}`;
+            
+            // Hide notification after 5 seconds
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 5000);
         }
-
+        
         // Load business information
         async function loadBusinessInfo() {
             try {
                 const response = await fetch('/api/business-info');
-                const data = await response.json();
-                
-                let html = '';
-                if (Object.keys(data).length > 0) {
-                    for (const [category, items] of Object.entries(data)) {
-                        html += `<h3 style="color: var(--primary); margin: 20px 0 15px; text-transform: uppercase; font-size: 1.1rem;">${category}</h3>`;
-                        for (const [key, value] of Object.entries(items)) {
-                            html += `
-                                <div class="memory-item">
-                                    <div class="memory-category">${category}</div>
-                                    <div class="memory-key">${key}</div>
-                                    <div class="memory-value">${value}</div>
-                                </div>
-                            `;
-                        }
-                    }
+                if (response.ok) {
+                    const data = await response.json();
+                    displayBusinessInfo(data);
                 } else {
-                    html = '<p style="text-align: center; color: var(--gray); padding: 40px;"><i class="fas fa-info-circle"></i> No business information added yet.</p>';
+                    document.getElementById('business-memory').innerHTML = `
+                        <div class="memory-item">
+                            <h3>No Business Information</h3>
+                            <p>You haven't set up your business information yet. Fill out the form above to get started.</p>
+                        </div>
+                    `;
                 }
-                
-                document.getElementById('business-memory-display').innerHTML = html;
             } catch (error) {
                 console.error('Error loading business info:', error);
-                document.getElementById('business-memory-display').innerHTML = '<p style="text-align: center; color: var(--danger);">Error loading business information</p>';
+                document.getElementById('business-memory').innerHTML = `
+                    <div class="memory-item">
+                        <h3>Error Loading</h3>
+                        <p>Failed to load business information. Please try again later.</p>
+                    </div>
+                `;
             }
         }
-
-        // Load on page load
-        document.addEventListener('DOMContentLoaded', () => {
+        
+        // Display business information
+        function displayBusinessInfo(data) {
+            const container = document.getElementById('business-memory');
+            
+            if (!data || Object.keys(data).length === 0) {
+                container.innerHTML = `
+                    <div class="memory-item">
+                        <h3>No Business Information</h3>
+                        <p>You haven't set up your business information yet. Fill out the form above to get started.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            if (data.companyName) {
+                html += `
+                    <div class="memory-item">
+                        <h3>Company Name</h3>
+                        <p>${data.companyName}</p>
+                    </div>
+                `;
+            }
+            
+            if (data.industry) {
+                html += `
+                    <div class="memory-item">
+                        <h3>Industry</h3>
+                        <p>${data.industry}</p>
+                    </div>
+                `;
+            }
+            
+            if (data.productsServices) {
+                html += `
+                    <div class="memory-item">
+                        <h3>Products & Services</h3>
+                        <p>${data.productsServices}</p>
+                    </div>
+                `;
+            }
+            
+            if (data.targetAudience) {
+                html += `
+                    <div class="memory-item">
+                        <h3>Target Audience</h3>
+                        <p>${data.targetAudience}</p>
+                    </div>
+                `;
+            }
+            
+            if (data.uniqueSellingPoints) {
+                html += `
+                    <div class="memory-item">
+                        <h3>Unique Selling Points</h3>
+                        <p>${data.uniqueSellingPoints}</p>
+                    </div>
+                `;
+            }
+            
+            if (data.toneOfVoice) {
+                html += `
+                    <div class="memory-item">
+                        <h3>Tone of Voice</h3>
+                        <p>${data.toneOfVoice}</p>
+                    </div>
+                `;
+            }
+            
+            if (!html) {
+                html = `
+                    <div class="memory-item">
+                        <h3>No Business Information</h3>
+                        <p>You haven't set up your business information yet. Fill out the form above to get started.</p>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+            
+            // Populate form fields
+            if (data.companyName) document.getElementById('company-name').value = data.companyName;
+            if (data.industry) document.getElementById('industry').value = data.industry;
+            if (data.productsServices) document.getElementById('products-services').value = data.productsServices;
+            if (data.targetAudience) document.getElementById('target-audience').value = data.targetAudience;
+            if (data.uniqueSellingPoints) document.getElementById('unique-selling-points').value = data.uniqueSellingPoints;
+            if (data.toneOfVoice) document.getElementById('tone-of-voice').value = data.toneOfVoice;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
             loadBusinessInfo();
         });
     </script>
