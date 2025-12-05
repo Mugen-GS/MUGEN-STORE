@@ -193,7 +193,7 @@ const addMessageToContactHistory = async (phoneNumber, userMessage, aiResponse) 
   }
 };
 
-// Get contact chat history
+// Get contact chat history - FIXED VERSION
 const getContactChatHistory = async (phoneNumber, limit = 10) => {
   try {
     // Normalize phone number for consistent lookup
@@ -217,7 +217,8 @@ const getContactChatHistory = async (phoneNumber, limit = 10) => {
         }
       }
       
-      return messages.slice(-limit); // Return last N messages
+      // Return last N messages (limit)
+      return messages.slice(-limit);
     }
     
     return [];

@@ -311,20 +311,43 @@ app.get('/ai-testing', (req, res) => {
   res.sendFile(__dirname + '/public/ai-testing.html');
 });
 
-// API: Get business information from AI Memory (specific route for business info)
+// Live Data Viewer Page
+app.get('/live-data', (req, res) => {
+  res.sendFile(__dirname + '/public/live-data.html');
+});
+
+// WhatsApp Dashboard Page
+app.get('/whatsapp-dashboard', (req, res) => {
+  res.sendFile(__dirname + '/public/whatsapp-dashboard.html');
+});
+
+// Index Page (redirect to dashboard)
+app.get('/index', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+
+// API: Get business information from AI Memory (specific route for business info) - FIXED VERSION
 app.get('/api/business-info', async (req, res) => {
   try {
     const memory = await getAIMemory();
-    // Filter for business information
+    
+    // Properly extract business information from AI Memory
     const businessInfo = {};
-    if (memory['business'] || memory['company'] || memory['products']) {
-      businessInfo.companyName = memory['business']?.name || memory['company']?.name || '';
-      businessInfo.industry = memory['business']?.industry || memory['company']?.industry || '';
-      businessInfo.productsServices = memory['products']?.services || memory['business']?.['products/services'] || '';
-      businessInfo.targetAudience = memory['business']?.['target audience'] || '';
-      businessInfo.uniqueSellingPoints = memory['business']?.['unique selling points'] || '';
-      businessInfo.toneOfVoice = memory['business']?.['tone of voice'] || '';
+    
+    // Extract from business category
+    if (memory['business']) {
+      businessInfo.companyName = memory['business']['name'] || '';
+      businessInfo.industry = memory['business']['industry'] || '';
+      businessInfo.targetAudience = memory['business']['target audience'] || '';
+      businessInfo.uniqueSellingPoints = memory['business']['unique selling points'] || '';
+      businessInfo.toneOfVoice = memory['business']['tone of voice'] || '';
     }
+    
+    // Extract products/services from products category
+    if (memory['products']) {
+      businessInfo.productsServices = memory['products']['services'] || '';
+    }
+    
     res.json(businessInfo);
   } catch (error) {
     console.error('[ERROR] Failed to get business info:', error.message);
@@ -380,20 +403,24 @@ app.post('/api/business-info', async (req, res) => {
   }
 });
 
-// API: Get AI guidelines from AI Memory
+// API: Get AI guidelines from AI Memory - FIXED VERSION
 app.get('/api/guidelines', async (req, res) => {
   try {
     const memory = await getAIMemory();
-    // Filter for guidelines information
+    
+    // Properly extract guidelines information from AI Memory
     const guidelines = {};
-    if (memory['guidelines'] || memory['communication']) {
-      guidelines.communicationStyle = memory['guidelines']?.['communication style'] || memory['communication']?.style || '';
-      guidelines.responseLength = memory['guidelines']?.['response length'] || 'medium';
-      guidelines.handlingObjections = memory['guidelines']?.['handling objections'] || '';
-      guidelines.upsellingTechniques = memory['guidelines']?.['upselling techniques'] || '';
-      guidelines.closingStrategies = memory['guidelines']?.['closing strategies'] || '';
-      guidelines.doNotSay = memory['guidelines']?.['do not say'] || '';
+    
+    // Extract from guidelines category
+    if (memory['guidelines']) {
+      guidelines.communicationStyle = memory['guidelines']['communication style'] || '';
+      guidelines.responseLength = memory['guidelines']['response length'] || 'medium';
+      guidelines.handlingObjections = memory['guidelines']['handling objections'] || '';
+      guidelines.upsellingTechniques = memory['guidelines']['upselling techniques'] || '';
+      guidelines.closingStrategies = memory['guidelines']['closing strategies'] || '';
+      guidelines.doNotSay = memory['guidelines']['do not say'] || '';
     }
+    
     res.json(guidelines);
   } catch (error) {
     console.error('[ERROR] Failed to get guidelines:', error.message);
@@ -449,7 +476,7 @@ app.post('/api/guidelines', async (req, res) => {
   }
 });
 
-// API: Test AI with current business info and guidelines
+// API: Test AI with current business info and guidelines - FIXED VERSION
 app.post('/api/test-ai', async (req, res) => {
   try {
     const { from, message } = req.body;
@@ -477,7 +504,7 @@ app.post('/api/test-ai', async (req, res) => {
   }
 });
 
-// API: Get test history
+// API: Get test history (FIXED VERSION)
 app.get('/api/test-history', async (req, res) => {
   try {
     // Get recent contacts with message counts
@@ -497,14 +524,24 @@ app.get('/api/test-history', async (req, res) => {
           
           // Find the most recent message
           if (chatHistory.length > 0) {
-            const lastMessage = chatHistory[chatHistory.length - 1];
-            if (lastMessage.role === 'user') {
-              testHistory.push({
-                phone: phone,
-                question: lastMessage.message,
-                answer: chatHistory.length > 1 ? chatHistory[chatHistory.length - 2].message : 'No response yet',
-                timestamp: lastMessage.timestamp
-              });
+            // Look for the most recent user message
+            for (let i = chatHistory.length - 1; i >= 0; i--) {
+              const msg = chatHistory[i];
+              if (msg.role === 'user') {
+                // Find the AI response that follows this user message
+                let aiResponse = 'No response yet';
+                if (i + 1 < chatHistory.length && chatHistory[i + 1].role === 'assistant') {
+                  aiResponse = chatHistory[i + 1].message;
+                }
+                
+                testHistory.push({
+                  phone: phone,
+                  question: msg.message,
+                  answer: aiResponse,
+                  timestamp: msg.timestamp
+                });
+                break; // Only take the most recent user message
+              }
             }
           }
         }
@@ -550,7 +587,7 @@ app.get('/api/contact/:phoneNumber', async (req, res) => {
   }
 });
 
-// API: Get contact chat history
+// API: Get contact chat history - FIXED VERSION
 app.get('/api/contact-history/:phoneNumber', async (req, res) => {
   try {
     const { phoneNumber } = req.params;
@@ -562,28 +599,30 @@ app.get('/api/contact-history/:phoneNumber', async (req, res) => {
     
     // Transform chat history into user/ai format for UI
     const transformedHistory = [];
-    for (let i = 0; i < chatHistory.length; i += 2) {
-      const userMsg = chatHistory[i];
-      const aiMsg = chatHistory[i + 1];
+    
+    // Process messages in pairs (user message followed by AI response)
+    for (let i = 0; i < chatHistory.length; i++) {
+      const msg = chatHistory[i];
       
-      if (userMsg && userMsg.role === 'user') {
-        transformedHistory.push({
-          user: userMsg.message,
-          timestamp: userMsg.timestamp
-        });
-      }
-      
-      if (aiMsg && aiMsg.role === 'assistant') {
-        // Find the corresponding user message
-        const lastEntry = transformedHistory[transformedHistory.length - 1];
-        if (lastEntry) {
-          lastEntry.ai = aiMsg.message;
-        } else {
-          transformedHistory.push({
-            ai: aiMsg.message,
-            timestamp: aiMsg.timestamp
-          });
+      if (msg.role === 'user') {
+        const entry = {
+          user: msg.message,
+          timestamp: msg.timestamp
+        };
+        
+        // Check if next message is AI response
+        if (i + 1 < chatHistory.length && chatHistory[i + 1].role === 'assistant') {
+          entry.ai = chatHistory[i + 1].message;
+          i++; // Skip the next message since we've processed it
         }
+        
+        transformedHistory.push(entry);
+      } else if (msg.role === 'assistant') {
+        // Handle case where we might start with an AI message (shouldn't happen but just in case)
+        transformedHistory.push({
+          ai: msg.message,
+          timestamp: msg.timestamp
+        });
       }
     }
     
@@ -744,21 +783,7 @@ app.post('/api/test-chat', async (req, res) => {
   }
 });
 
-// API: Get conversation history for test UI
-app.get('/api/test-history', async (req, res) => {
-  try {
-    const phone = req.query.phone;
-    if (!phone) {
-      return res.status(400).json({ error: 'Phone number is required' });
-    }
-    
-    const history = await getContactChatHistory(phone, 20);
-    res.json({ history });
-  } catch (error) {
-    console.error('[ERROR] Failed to load test history:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
+// API: Get conversation history for test UI (REMOVED - using /api/test-history instead)
 
 // API: Test sending an image via WhatsApp
 app.post('/api/test-image', async (req, res) => {
