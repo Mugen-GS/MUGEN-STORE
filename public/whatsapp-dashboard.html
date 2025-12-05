@@ -460,11 +460,30 @@
 
     <script>
         // Update statistics
-        function updateStats() {
-            // In a real implementation, these would be fetched from the API
-            document.getElementById('customer-count').textContent = '12';
-            document.getElementById('message-count').textContent = '142';
-            document.getElementById('help-count').textContent = '3';
+        async function updateStats() {
+            try {
+                const response = await fetch('/api/stats');
+                if (response.ok) {
+                    const stats = await response.json();
+                    
+                    // Update the statistics display
+                    document.getElementById('customer-count').textContent = stats.totalContacts || 0;
+                    document.getElementById('message-count').textContent = stats.totalMessages || 0;
+                    document.getElementById('help-count').textContent = stats.trainingExamples || 0;
+                } else {
+                    console.error('Failed to fetch stats');
+                    // Fallback to default values
+                    document.getElementById('customer-count').textContent = '0';
+                    document.getElementById('message-count').textContent = '0';
+                    document.getElementById('help-count').textContent = '0';
+                }
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+                // Fallback to default values
+                document.getElementById('customer-count').textContent = '0';
+                document.getElementById('message-count').textContent = '0';
+                document.getElementById('help-count').textContent = '0';
+            }
             
             // Update timestamp
             const now = new Date();
