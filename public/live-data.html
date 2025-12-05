@@ -491,8 +491,11 @@
                     const data = await response.json();
                     displayContactData(data);
                     loadChatHistory(phoneNumber);
-                } else {
+                } else if (response.status === 404) {
                     showNotification('Contact not found', 'error');
+                } else {
+                    const errorData = await response.json();
+                    showNotification('Error: ' + (errorData.error || 'Failed to load contact data'), 'error');
                 }
             } catch (error) {
                 console.error('Error loading contact data:', error);
@@ -543,7 +546,8 @@
                     const data = await response.json();
                     displayChatHistory(data);
                 } else {
-                    showNotification('Chat history not found', 'error');
+                    const errorData = await response.json();
+                    showNotification('Error: ' + (errorData.error || 'Failed to load chat history'), 'error');
                 }
             } catch (error) {
                 console.error('Error loading chat history:', error);
@@ -622,10 +626,11 @@
                     const data = await response.json();
                     displayContacts(data);
                 } else {
+                    const errorData = await response.json();
                     document.getElementById('contacts-container').innerHTML = `
                         <div class="contact-card">
-                            <h3><i class="fas fa-exclamation-circle"></i> No Contacts</h3>
-                            <p>No contacts found in the system.</p>
+                            <h3><i class="fas fa-exclamation-circle"></i> Error Loading</h3>
+                            <p>Error: ${errorData.error || 'Failed to load contacts'}</p>
                         </div>
                     `;
                 }

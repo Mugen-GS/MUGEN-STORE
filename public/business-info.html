@@ -436,7 +436,8 @@
                     showNotification('Business information saved successfully!', 'success');
                     loadBusinessInfo();
                 } else {
-                    showNotification('Failed to save business information. Please try again.', 'error');
+                    const errorData = await response.json();
+                    showNotification('Failed to save business information: ' + (errorData.error || 'Please try again.'), 'error');
                 }
             } catch (error) {
                 console.error('Error saving business info:', error);

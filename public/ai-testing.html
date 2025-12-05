@@ -487,7 +487,7 @@
                 } else {
                     const errorData = await response.json();
                     addMessageToChat('AI Assistant', `Error: ${errorData.error}`, 'ai-message');
-                    showNotification('Failed to get AI response. Please try again.', 'error');
+                    showNotification('Failed to get AI response: ' + (errorData.error || 'Please try again.'), 'error');
                 }
             } catch (error) {
                 console.error('Error testing AI:', error);
@@ -616,6 +616,10 @@
                     } else {
                         addMessageToChat('AI Assistant', 'No conversation history found for this number.', 'ai-message');
                     }
+                } else {
+                    const chatContainer = document.getElementById('chat-container');
+                    chatContainer.innerHTML = '';
+                    addMessageToChat('AI Assistant', 'Error: Failed to load conversation history', 'ai-message');
                 }
             } catch (error) {
                 console.error('Error loading conversation:', error);

@@ -311,85 +311,311 @@ app.get('/ai-testing', (req, res) => {
   res.sendFile(__dirname + '/public/ai-testing.html');
 });
 
-// API: Add business information to AI Memory
-app.post('/api/business-info', async (req, res) => {
-  try {
-    const { category, key, value, notes } = req.body;
-    const result = await addMemory(category, key, value, notes);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// API: Get business information from AI Memory
+// API: Get business information from AI Memory (specific route for business info)
 app.get('/api/business-info', async (req, res) => {
   try {
     const memory = await getAIMemory();
-    res.json(memory);
+    // Filter for business information
+    const businessInfo = {};
+    if (memory['business'] || memory['company'] || memory['products']) {
+      businessInfo.companyName = memory['business']?.name || memory['company']?.name || '';
+      businessInfo.industry = memory['business']?.industry || memory['company']?.industry || '';
+      businessInfo.productsServices = memory['products']?.services || memory['business']?.['products/services'] || '';
+      businessInfo.targetAudience = memory['business']?.['target audience'] || '';
+      businessInfo.uniqueSellingPoints = memory['business']?.['unique selling points'] || '';
+      businessInfo.toneOfVoice = memory['business']?.['tone of voice'] || '';
+    }
+    res.json(businessInfo);
   } catch (error) {
+    console.error('[ERROR] Failed to get business info:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
 
-// API: Get contact information
-app.get('/api/contact-info', async (req, res) => {
+// API: Save business information to AI Memory
+app.post('/api/business-info', async (req, res) => {
   try {
-    const phone = req.query.phone;
-    if (!phone) {
+    const {
+      companyName,
+      industry,
+      productsServices,
+      targetAudience,
+      uniqueSellingPoints,
+      toneOfVoice
+    } = req.body;
+
+    // Save each piece of information to AI Memory
+    const promises = [];
+    
+    if (companyName) {
+      promises.push(addMemory('business', 'name', companyName, 'Company name'));
+    }
+    
+    if (industry) {
+      promises.push(addMemory('business', 'industry', industry, 'Industry'));
+    }
+    
+    if (productsServices) {
+      promises.push(addMemory('products', 'services', productsServices, 'Products and services'));
+    }
+    
+    if (targetAudience) {
+      promises.push(addMemory('business', 'target audience', targetAudience, 'Target audience'));
+    }
+    
+    if (uniqueSellingPoints) {
+      promises.push(addMemory('business', 'unique selling points', uniqueSellingPoints, 'Unique selling points'));
+    }
+    
+    if (toneOfVoice) {
+      promises.push(addMemory('business', 'tone of voice', toneOfVoice, 'Preferred tone of voice'));
+    }
+    
+    await Promise.all(promises);
+    
+    res.json({ success: true, message: 'Business information saved successfully' });
+  } catch (error) {
+    console.error('[ERROR] Failed to save business info:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API: Get AI guidelines from AI Memory
+app.get('/api/guidelines', async (req, res) => {
+  try {
+    const memory = await getAIMemory();
+    // Filter for guidelines information
+    const guidelines = {};
+    if (memory['guidelines'] || memory['communication']) {
+      guidelines.communicationStyle = memory['guidelines']?.['communication style'] || memory['communication']?.style || '';
+      guidelines.responseLength = memory['guidelines']?.['response length'] || 'medium';
+      guidelines.handlingObjections = memory['guidelines']?.['handling objections'] || '';
+      guidelines.upsellingTechniques = memory['guidelines']?.['upselling techniques'] || '';
+      guidelines.closingStrategies = memory['guidelines']?.['closing strategies'] || '';
+      guidelines.doNotSay = memory['guidelines']?.['do not say'] || '';
+    }
+    res.json(guidelines);
+  } catch (error) {
+    console.error('[ERROR] Failed to get guidelines:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API: Save AI guidelines to AI Memory
+app.post('/api/guidelines', async (req, res) => {
+  try {
+    const {
+      communicationStyle,
+      responseLength,
+      handlingObjections,
+      upsellingTechniques,
+      closingStrategies,
+      doNotSay
+    } = req.body;
+
+    // Save each guideline to AI Memory
+    const promises = [];
+    
+    if (communicationStyle) {
+      promises.push(addMemory('guidelines', 'communication style', communicationStyle, 'Communication style'));
+    }
+    
+    if (responseLength) {
+      promises.push(addMemory('guidelines', 'response length', responseLength, 'Response length preference'));
+    }
+    
+    if (handlingObjections) {
+      promises.push(addMemory('guidelines', 'handling objections', handlingObjections, 'How to handle objections'));
+    }
+    
+    if (upsellingTechniques) {
+      promises.push(addMemory('guidelines', 'upselling techniques', upsellingTechniques, 'Upselling techniques'));
+    }
+    
+    if (closingStrategies) {
+      promises.push(addMemory('guidelines', 'closing strategies', closingStrategies, 'Closing strategies'));
+    }
+    
+    if (doNotSay) {
+      promises.push(addMemory('guidelines', 'do not say', doNotSay, 'Things to avoid saying'));
+    }
+    
+    await Promise.all(promises);
+    
+    res.json({ success: true, message: 'AI guidelines saved successfully' });
+  } catch (error) {
+    console.error('[ERROR] Failed to save guidelines:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API: Test AI with current business info and guidelines
+app.post('/api/test-ai', async (req, res) => {
+  try {
+    const { from, message } = req.body;
+    console.log(`\n=== 🧪 TESTING AI FOR ${from} ===`);
+    console.log(`Message: ${message}`);
+    
+    // Get or create contact
+    let contact = await getContact(from);
+    if (!contact) {
+      contact = await createOrUpdateContact(from);
+    }
+    
+    // Get AI response with full context (same as WhatsApp)
+    const aiResponse = await getGeminiResponse(message, [], from);
+    
+    // Add messages to contact's chat history
+    await addMessageToContactHistory(from, message, aiResponse);
+    
+    console.log(`[INFO] AI Response: ${aiResponse}`);
+    
+    res.json({ response: aiResponse });
+  } catch (error) {
+    console.error('[ERROR] Test AI failed:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API: Get test history
+app.get('/api/test-history', async (req, res) => {
+  try {
+    // Get recent contacts with message counts
+    const rows = await getSheetValues('Contacts');
+    const contacts = rows.slice(1); // Skip header
+    
+    const testHistory = [];
+    for (const contact of contacts) {
+      if (contact && contact.length > 0) {
+        const phone = contact[0];
+        const messageCount = parseInt(contact[4]) || 0;
+        
+        // Only include contacts with messages
+        if (messageCount > 0) {
+          // Get recent chat history
+          const chatHistory = await getContactChatHistory(phone, 5);
+          
+          // Find the most recent message
+          if (chatHistory.length > 0) {
+            const lastMessage = chatHistory[chatHistory.length - 1];
+            if (lastMessage.role === 'user') {
+              testHistory.push({
+                phone: phone,
+                question: lastMessage.message,
+                answer: chatHistory.length > 1 ? chatHistory[chatHistory.length - 2].message : 'No response yet',
+                timestamp: lastMessage.timestamp
+              });
+            }
+          }
+        }
+      }
+    }
+    
+    // Sort by timestamp (most recent first)
+    testHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    res.json(testHistory.slice(0, 20)); // Return last 20 test interactions
+  } catch (error) {
+    console.error('[ERROR] Failed to load test history:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API: Get contact data
+app.get('/api/contact/:phoneNumber', async (req, res) => {
+  try {
+    const { phoneNumber } = req.params;
+    if (!phoneNumber) {
       return res.status(400).json({ error: 'Phone number is required' });
     }
-
-    const contact = await getContact(phone);
-    res.json(contact || { error: 'Contact not found' });
-  } catch (error) {
-    console.error('[ERROR] Failed to get contact info:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// API: Add AI guideline
-app.post('/api/ai-guidelines', async (req, res) => {
-  try {
-    const { category, title, description, priority } = req.body;
-    const row = [category, title, description, priority, 'Yes'];
     
-    const response = await axios.post(
-      `${process.env.APPS_SCRIPT_URL}?action=appendRow&sheet=AI Guidelines`,
-      { values: row },
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-    
-    res.json(response.data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// API: Get AI guidelines
-app.get('/api/ai-guidelines', async (req, res) => {
-  try {
-    const response = await axios.get(process.env.APPS_SCRIPT_URL, {
-      params: {
-        action: 'getRows',
-        sheet: 'AI Guidelines'
-      }
-    });
-
-    if (response.data.success) {
-      const rows = response.data.data.slice(1); // Skip header
-      const guidelines = rows.map(row => ({
-        category: row[0],
-        title: row[1],
-        description: row[2],
-        priority: row[3],
-        active: row[4]
-      }));
-      res.json(guidelines);
-    } else {
-      res.status(500).json({ error: 'Failed to load guidelines' });
+    const contact = await getContact(phoneNumber);
+    if (!contact) {
+      return res.status(404).json({ error: 'Contact not found' });
     }
+    
+    res.json({
+      phone: contact.phoneNumber,
+      name: contact.name,
+      firstInteraction: contact.firstContactDate,
+      lastInteraction: contact.lastContactDate,
+      messageCount: contact.messageCount,
+      leadStatus: contact.leadStatus,
+      tags: contact.tags,
+      notes: contact.notes
+    });
   } catch (error) {
+    console.error('[ERROR] Failed to get contact data:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API: Get contact chat history
+app.get('/api/contact-history/:phoneNumber', async (req, res) => {
+  try {
+    const { phoneNumber } = req.params;
+    if (!phoneNumber) {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+    
+    const chatHistory = await getContactChatHistory(phoneNumber, 50);
+    
+    // Transform chat history into user/ai format for UI
+    const transformedHistory = [];
+    for (let i = 0; i < chatHistory.length; i += 2) {
+      const userMsg = chatHistory[i];
+      const aiMsg = chatHistory[i + 1];
+      
+      if (userMsg && userMsg.role === 'user') {
+        transformedHistory.push({
+          user: userMsg.message,
+          timestamp: userMsg.timestamp
+        });
+      }
+      
+      if (aiMsg && aiMsg.role === 'assistant') {
+        // Find the corresponding user message
+        const lastEntry = transformedHistory[transformedHistory.length - 1];
+        if (lastEntry) {
+          lastEntry.ai = aiMsg.message;
+        } else {
+          transformedHistory.push({
+            ai: aiMsg.message,
+            timestamp: aiMsg.timestamp
+          });
+        }
+      }
+    }
+    
+    res.json({ chatHistory: transformedHistory });
+  } catch (error) {
+    console.error('[ERROR] Failed to get contact history:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API: Get all contacts
+app.get('/api/contacts', async (req, res) => {
+  try {
+    const rows = await getSheetValues('Contacts');
+    const contacts = rows.slice(1); // Skip header
+    
+    const contactList = contacts.map(contact => ({
+      phone: contact[0],
+      name: contact[1],
+      firstInteraction: contact[2],
+      lastInteraction: contact[3],
+      messageCount: parseInt(contact[4]) || 0,
+      leadStatus: contact[5],
+      tags: contact[6]
+    })).filter(contact => contact.phone && contact.messageCount > 0); // Only contacts with messages
+    
+    // Sort by last interaction (most recent first)
+    contactList.sort((a, b) => new Date(b.lastInteraction) - new Date(a.lastInteraction));
+    
+    res.json(contactList);
+  } catch (error) {
+    console.error('[ERROR] Failed to get contacts:', error.message);
     res.status(500).json({ error: error.message });
   }
 });

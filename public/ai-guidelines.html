@@ -440,7 +440,8 @@
                     showNotification('AI guidelines saved successfully!', 'success');
                     loadGuidelines();
                 } else {
-                    showNotification('Failed to save AI guidelines. Please try again.', 'error');
+                    const errorData = await response.json();
+                    showNotification('Failed to save AI guidelines: ' + (errorData.error || 'Please try again.'), 'error');
                 }
             } catch (error) {
                 console.error('Error saving guidelines:', error);
